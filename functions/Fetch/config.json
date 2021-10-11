@@ -1,0 +1,15 @@
+{
+    "cosmos": {
+        "endpoint": "https://<account_name>.documents.azure.com:443",
+        "key": "<key>"
+    },
+    "storage": {
+        "account": "<account_name>",
+        "key": "<key>"
+    },
+    "fitbit": {
+        "redirectUri": "https://<app_name>.azurewebsites.net/auth-callback",
+        "clientId": "<fitbit_client_id>",
+        "secret": "<fitbit_secret>"
+    }
+}
