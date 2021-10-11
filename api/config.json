@@ -1,0 +1,13 @@
+{
+    "cosmos": {
+        "endpoint": "https://<endpoint_name>.documents.azure.com:443",
+        "key": "<key>"
+    },
+    "storage": {
+        "account": "<account_name>",
+        "key": "<account_key>"
+    },
+    "appInsights": {
+        "key": "<instrumentation_key>"
+    }
+}
