@@ -1,0 +1,29 @@
+/* You can add global styles to this file, and also import other style files */
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.flex-container {
+    display: flex;
+    justify-content: center;
+}
+
+.flex-container>mat-card {
+    margin: 10px;
+    padding: 20px;
+    font-size: 30px;
+}
+
+.flex-container>div {
+    background-color: #f1f1f1;
+    margin: 10px;
+    padding: 20px;
+    font-size: 30px;
+}

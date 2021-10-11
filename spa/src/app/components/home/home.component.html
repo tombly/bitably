@@ -1,0 +1,40 @@
+<mat-toolbar color="primary">
+    <div>Bitably</div>
+</mat-toolbar>
+
+<div class="flex-container">
+
+    <mat-card class="box" style="min-width: 200px;">
+
+        <mat-card-header>
+            <mat-card-title>{{userName}}</mat-card-title>
+        </mat-card-header>
+
+        <form [formGroup]="signOutForm" (ngSubmit)="onSignOut()" style="text-align: center;">
+            <mat-card-content>
+            </mat-card-content>
+            <button mat-flat-button color="accent">Sign Out</button>
+        </form>
+
+    </mat-card>
+
+    <mat-card class="box" style="min-width: 100px; min-height: 120px;">
+
+        <mat-card-header>
+            <mat-card-title>Days</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content style="margin: 40px;">
+
+            <div style="font-size: 60px" *ngIf="dayCount !== undefined">
+                {{dayCount}}
+            </div>
+            <div style="font-size: 60px" *ngIf="dayCount === undefined">
+                -
+            </div>
+        </mat-card-content>
+
+    </mat-card>
+
+
+</div>
