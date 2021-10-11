@@ -1,0 +1,857 @@
+{
+    //
+    // To deploy: az deployment sub create --location WestUS --template-file azuredeploy.json   
+    //
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "nameEnvironment": {
+            "type": "string",
+            // Used as part of the resource naming.
+            // Example: "dev", "test", or "prod"
+            "defaultValue": "dev"
+        },
+        "nameRegion": {
+            "type": "string",
+            // Used as part of the resource naming.
+            // Example: "eus", "eu2", "uks", etc.
+            "defaultValue": "eus"
+        },
+        "nameApp": {
+            "type": "string",
+            // Used as part of the resource naming.
+            // Example: "myapp", "fitapp", etc.
+            "defaultValue": "bitably"
+        },
+        "cdnEndpointName": {
+            "type": "string",
+            // The subdomain of the CDN endpoint.
+            // Example: "myapp", "fitapp", etc.
+            "defaultValue": "bitably"
+        },
+        "rgLocation": {
+            "type": "string",
+            // The region in which all resources are created.
+            // Example: "westus3", "eastus", "uksouth", etc.
+            "defaultValue": "eastus"
+        },
+        "apimPublisherEmail": {
+            "type": "string",
+            // Publisher info for the API management service.
+            // Example: "jane@aol.com", etc.
+            "defaultValue": "jane@aol.com"
+        },
+        "apimPublisherName": {
+            "type": "string",
+            // Publisher info for the API management service.
+            // Example: "MyCorp", etc.
+            "defaultValue": "MyCorp"
+        }
+    },
+    "variables": {
+          "rgPrefix": "[concat(parameters('nameEnvironment'), '-', parameters('nameRegion'), '-', parameters('nameApp'), '-rg')]",
+          "resPrefix": "[concat(parameters('nameEnvironment'), parameters('nameRegion'), parameters('nameApp'))]",
+          "rgAcrName": "[concat(variables('rgPrefix'), '-acr01')]",
+          "rgDataName": "[concat(variables('rgPrefix'), '-data01')]",
+          "rgAppName": "[concat(variables('rgPrefix'), '-app01')]",
+          "rgAPIMName": "[concat(variables('rgPrefix'), '-apim01')]",
+          "rgFuncName": "[concat(variables('rgPrefix'), '-func01')]",
+          "rgSiteName": "[concat(variables('rgPrefix'), '-site01')]",
+          "registriesName": "[concat(variables('resPrefix'), 'acr01')]",
+          "storageDataAccountName": "[concat(variables('resPrefix'), 'datastor01')]",
+          "storageSiteAccountName": "[concat(variables('resPrefix'), 'sitestor01')]",
+          "cosmosDataAccountName": "[concat(variables('resPrefix'), 'datacos01')]",
+          "appName": "[concat(variables('resPrefix'), 'app01')]",
+          "appInsightsAppName": "[concat(variables('resPrefix'), 'app01in')]",
+          "aspName": "[concat(variables('resPrefix'), 'asp01')]",
+          "cdnName": "[concat(variables('resPrefix'), 'cdn01')]",
+          "functionAppName": "[concat(variables('resPrefix'), 'func01')]",
+          "appInsightsFuncName": "[concat(variables('resPrefix'), 'func01in')]",
+          "storageFuncAccountName": "[concat(variables('resPrefix'), 'func01stor')]",
+          "apimServiceName" : "[concat(variables('resPrefix'), 'apim01')]",
+          "apimApiName" : "BitablyAPI",
+          "apimFunctionName" : "FetchFunctionAPI"
+    },
+    "resources": [
+
+        // Resource group (Container registry)
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[variables('rgAcrName')]",
+            "properties": {}
+        },
+
+        // Container registry
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "registryDeployment",
+            "resourceGroup": "[variables('rgAcrName')]",
+            "dependsOn": [
+                "[variables('rgAcrName')]",
+                "appServiceDeployment"  // Need the app service to go first since we need the SCM URI
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "rgLocation": {
+                        "value": "[parameters('rgLocation')]"
+                    },
+                    "registriesName": {
+                        "value": "[variables('registriesName')]"
+                    },
+                    "appName": {
+                        "value": "[variables('appName')]"
+                    },
+                    "rgAppName": {
+                        "value": "[variables('rgAppName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "rgLocation": {
+                            "type": "string"
+                        },
+                        "registriesName": {
+                            "type": "string"
+                        },
+                        "appName": {
+                            "type": "string"
+                        },
+                        "rgAppName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.ContainerRegistry/registries",
+                            "apiVersion": "2021-06-01-preview",
+                            "name": "[parameters('registriesName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "tags": {},
+                            "sku": {
+                                "name": "Basic",
+                                "tier": "Basic"
+                            },
+                            "properties": {
+                                "adminUserEnabled": true,
+                                "policies": {
+                                    "quarantinePolicy": {
+                                        "status": "disabled"
+                                    },
+                                    "trustPolicy": {
+                                        "type": "Notary",
+                                        "status": "disabled"
+                                    },
+                                    "retentionPolicy": {
+                                        "days": 7,
+                                        "status": "disabled"
+                                    },
+                                    "exportPolicy": {
+                                        "status": "enabled"
+                                    }
+                                },
+                                "encryption": {
+                                    "status": "disabled"
+                                },
+                                "dataEndpointEnabled": false,
+                                "publicNetworkAccess": "Enabled",
+                                "networkRuleBypassOptions": "AzureServices",
+                                "zoneRedundancy": "Disabled",
+                                "anonymousPullEnabled": false
+                            }
+                        },
+                        {
+                            "type": "Microsoft.ContainerRegistry/registries/webhooks",
+                            "apiVersion": "2021-06-01-preview",
+                            "name": "[concat(parameters('registriesName'), '/', parameters('appName'))]",
+                            "location": "[parameters('rgLocation')]",
+                            "dependsOn": [
+                                "[parameters('registriesName')]"
+                            ],
+                            "properties": {
+                                "status": "enabled",
+                                "scope": "bitapp:latest",
+                                "actions": [
+                                    "push"
+                                ],
+                                // We have to specify the resource group name here
+                                // since the app service resource that we need to
+                                // grab the SCM URI from is in another group. But,
+                                // note that we need to delay the evaluation of this
+                                // by specifying this template with an inner scope
+                                // (see expressionEvaluationOptions) and pass in
+                                // the parameters that we need.
+                                "serviceUri": "[concat(list(resourceId(parameters('rgAppName'), 'Microsoft.Web/sites/config', parameters('appName'), 'publishingcredentials'), '2015-08-01').properties.scmUri, '/docker/hook')]"
+                            }
+                        }]
+                },
+                "outputs": {}
+            }
+        },
+
+        // Resource group (Data stores)
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[variables('rgDataName')]",
+            "properties": {}
+        },
+
+        // Storage account (data)
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "storageDeployment",
+            "resourceGroup": "[variables('rgDataName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgDataName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [{
+                        "type": "Microsoft.Storage/storageAccounts",
+                        "apiVersion": "2017-10-01",
+                        "name": "[variables('storageDataAccountName')]",
+                        "location": "[parameters('rgLocation')]",
+                        "kind": "StorageV2",
+                        "sku": {
+                            "name": "Standard_LRS"
+                        }
+                    }],
+                    "outputs": {}
+                }
+            }
+        },
+        
+        // Cosmos DB
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "cosmosDeployment",
+            "resourceGroup": "[variables('rgDataName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgDataName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [{
+                        "type": "Microsoft.DocumentDB/databaseAccounts",
+                        "apiVersion": "2021-04-15",
+                        "name": "[variables('cosmosDataAccountName')]",
+                        "location": "[parameters('rgLocation')]",
+                        "properties": {
+                            "enableFreeTier": true,
+                            "databaseAccountOfferType": "Standard",
+                            "consistencyPolicy": {
+                                "defaultConsistencyLevel": "Session"
+                            },
+                            "locations": [{
+                                "locationName": "[parameters('rgLocation')]"
+                            }]
+                        }
+                    }]
+                }
+            }
+        },
+
+        // Resource group (App service)
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[variables('rgAppName')]",
+            "properties": {}
+        },
+
+        // App service
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "appServiceDeployment",
+            "resourceGroup": "[variables('rgAppName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgAppName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "rgLocation": {
+                        "value": "[parameters('rgLocation')]"
+                    },
+                    "appName": {
+                        "value": "[variables('appName')]"
+                    },
+                    "aspName": {
+                        "value": "[variables('aspName')]"
+                    },
+                    "registriesName": {
+                        "value": "[variables('registriesName')]"
+                    },
+                    "appInsightsAppName": {
+                        "value": "[variables('appInsightsAppName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "rgLocation": {
+                            "type": "string"
+                        },
+                         "appName": {
+                            "type": "string"
+                        },
+                         "aspName": {
+                            "type": "string"
+                        },
+                         "registriesName": {
+                            "type": "string"
+                        },
+                         "appInsightsAppName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Web/serverfarms",
+                            "apiVersion": "2021-01-15",
+                            "name": "[parameters('aspName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "sku": {
+                                "name": "B1"
+                            },
+                            "kind": "linux",
+                            "properties": {
+                                "reserved": true
+                            }
+                        },
+                        {
+                            "type": "Microsoft.Web/sites",
+                            "apiVersion": "2021-01-15",
+                            "name": "[parameters('appName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "dependsOn": [
+                                "[parameters('aspName')]",
+                                "[resourceId('microsoft.insights/components/',parameters('appInsightsAppName'))]"
+                            ],
+                            "properties": {
+                                "serverFarmId": "[parameters('aspName')]",
+                                "siteConfig": {
+                                    "linuxFxVersion": "[concat('DOCKER|',parameters('registriesName'),'.azurecr.io/bitapp:latest')]",
+                                    "acrUseManagedIdentityCreds": false,
+                                    "appSettings": [
+                                        {
+                                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                                            "value": "[reference(concat('microsoft.insights/components/',parameters('appInsightsAppName')), '2015-05-01').InstrumentationKey]"
+                                        },
+                                        {
+                                            "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                                            "value": "[reference(concat('microsoft.insights/components/',parameters('appInsightsAppName')), '2015-05-01').ConnectionString]"
+                                        },
+                                        {
+                                            "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
+                                            "value": "~2"
+                                        },
+                                        {
+                                            "name": "XDT_MicrosoftApplicationInsights_Mode",
+                                            "value": "default"
+                                        }
+                                    ]                                   
+                                },
+                                "resources": []
+                            }
+                        },
+                        {
+                            "apiVersion": "2015-05-01",
+                            "name": "[parameters('appInsightsAppName')]",
+                            "type": "microsoft.insights/components",
+                            "location": "[parameters('rgLocation')]",
+                            "tags": null,
+                            "properties": {
+                                "ApplicationId": "[parameters('appInsightsAppName')]",
+                                "Request_Source": "IbizaWebAppExtensionCreate"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+
+        // Resource group (APIM)
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[variables('rgAPIMName')]",
+            "properties": {}
+        },
+
+        // API Management
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "apimDeployment",
+            "resourceGroup": "[variables('rgAPIMName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgAPIMName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "rgLocation": {
+                        "value": "[parameters('rgLocation')]"
+                    },
+                    "apimServiceName": {
+                        "value": "[variables('apimServiceName')]"
+                    },
+                    "apimPublisherEmail": {
+                        "value": "[parameters('apimPublisherEmail')]"
+                    },
+                    "apimPublisherName": {
+                        "value": "[parameters('apimPublisherName')]"
+                    },
+                    "apimApiName": {
+                        "value": "[variables('apimApiName')]"
+                    },
+                    "appName": {
+                        "value": "[variables('appName')]"
+                    },
+                    "apimFunctionName": {
+                        "value": "[variables('apimFunctionName')]"
+                    },
+                    "functionAppName": {
+                        "value": "[variables('functionAppName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                        "parameters": {
+                        "rgLocation": {
+                            "type": "string"
+                        },
+                        "apimServiceName": {
+                            "type": "string"
+                        },
+                        "apimPublisherEmail": {
+                            "type": "string"
+                        },
+                        "apimPublisherName": {
+                            "type": "string"
+                        },
+                        "apimApiName": {
+                            "type": "string"
+                        },
+                        "appName": {
+                            "type": "string"
+                        },
+                        "apimFunctionName": {
+                            "type": "string"
+                        },
+                        "functionAppName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.ApiManagement/service",
+                            "apiVersion": "2019-12-01",
+                            "name": "[parameters('apimServiceName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "sku": {
+                                "name": "Consumption",
+                                "capacity": "0"
+                            },
+                            "properties": {
+                                "publisherEmail": "[parameters('apimPublisherEmail')]",
+                                "publisherName": "[parameters('apimPublisherName')]"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.ApiManagement/service/apis",
+                            "apiVersion": "2021-01-01-preview",
+                            "name": "[concat(parameters('apimServiceName'),'/bitably')]",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                            ],
+                            "properties": {
+                                "displayName": "[parameters('apimApiName')]",
+                                "apiRevision": "1",
+                                "subscriptionRequired": false,
+                                "serviceUrl": "[concat('https://',parameters('appName'),'.azurewebsites.net')]",
+                                "protocols": [
+                                    "https"
+                                ],
+                                "isCurrent": true,
+                                "path": "/"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.ApiManagement/service/apis",
+                            "apiVersion": "2021-01-01-preview",
+                            "name": "[concat(parameters('apimServiceName'),'/fetchfunction')]",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                            ],
+                            "properties": {
+                                "displayName": "[parameters('apimFunctionName')]",
+                                "apiRevision": "1",
+                                "subscriptionRequired": true,                                
+                                "serviceUrl": "[concat('https://',parameters('functionAppName'),'.azurewebsites.net')]",
+                                "path": "func",
+                                "protocols": [
+                                    "https"
+                                ],
+                                "isCurrent": true
+                            }
+                        },
+                        {
+                            "type": "Microsoft.ApiManagement/service/apis/operations",
+                            "apiVersion": "2021-01-01-preview",
+                            "name": "[concat(parameters('apimServiceName'),'/bitably/register')]",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'bitably')]",
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                            ],
+                            "properties": {
+                                "displayName": "Register",
+                                "method": "GET",
+                                "urlTemplate": "/register",
+                                "templateParameters": [],
+                                "request": {
+                                    "queryParameters": [
+                                        {
+                                            "name": "userId",
+                                            "values": [],
+                                            "type": null
+                                        },
+                                        {
+                                            "name": "token",
+                                            "values": [],
+                                            "type": null
+                                        }
+                                    ],
+                                    "headers": [],
+                                    "representations": []
+                                },
+                                "responses": []
+                            }
+                        },
+                        {
+                            "type": "Microsoft.ApiManagement/service/apis/operations",
+                            "apiVersion": "2021-01-01-preview",
+                            "name": "[concat(parameters('apimServiceName'),'/bitably/sleep-day-count')]",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'bitably')]",
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                            ],
+                            "properties": {
+                                "displayName": "Sleep Day Count",
+                                "method": "GET",
+                                "urlTemplate": "/sleep/days/count",
+                                "templateParameters": [],
+                                "request": {
+                                    "queryParameters": [
+                                        {
+                                            "name": "userId",
+                                            "values": [],
+                                            "type": null
+                                        }
+                                    ],
+                                    "headers": [],
+                                    "representations": []
+                                },
+                                "responses": []
+                            }
+                        },
+                        {
+                            "type": "Microsoft.ApiManagement/service/apis/operations",
+                            "apiVersion": "2021-01-01-preview",
+                            "name": "[concat(parameters('apimServiceName'),'/fetchfunction/fetch')]",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'fetchfunction')]",
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                            ],
+                            "properties": {
+                                "displayName": "Fetch",
+                                "method": "GET",
+                                "urlTemplate": "/api/orchestrators/FetchOrchestrator",
+                                "templateParameters": [],
+                                "responses": []
+                            }
+                        }
+                    ],
+                    "outputs": {}
+                }
+            }
+        },
+
+        // Resource group (functions)
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[variables('rgFuncName')]",
+            "properties": {}
+        },
+
+        // Durable function with storage account and app insights
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "functionDeployment",
+            "resourceGroup": "[variables('rgFuncName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgFuncName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "rgLocation": {
+                        "value": "[parameters('rgLocation')]"
+                    },
+                    "storageFuncAccountName": {
+                        "value": "[variables('storageFuncAccountName')]"
+                    },
+                    "appInsightsFuncName": {
+                        "value": "[variables('appInsightsFuncName')]"
+                    },
+                    "functionAppName": {
+                        "value": "[variables('functionAppName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "rgLocation": {
+                            "type": "string"
+                        },
+                        "storageFuncAccountName": {
+                            "type": "string"
+                        },
+                        "appInsightsFuncName": {
+                            "type": "string"
+                        },
+                        "functionAppName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Storage/storageAccounts",
+                            "apiVersion": "2017-10-01",
+                            "name": "[parameters('storageFuncAccountName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "kind": "StorageV2",
+                            "sku": {
+                                "name": "Standard_LRS"
+                            }
+                        },
+                        {
+                            "apiVersion": "2015-05-01",
+                            "name": "[parameters('appInsightsFuncName')]",
+                            "type": "Microsoft.Insights/components",
+                            "kind": "web",
+                            "location": "[resourceGroup().location]",
+                            "tags": {
+                                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('functionAppName'))]": "Resource"
+                            },
+                            "properties": {
+                                "Application_Type": "web",
+                                "ApplicationId": "[parameters('appInsightsFuncName')]"
+                            }
+                        },
+                        {
+                            "apiVersion": "2015-08-01",
+                            "type": "Microsoft.Web/sites",
+                            "name": "[parameters('functionAppName')]",
+                            "location": "[resourceGroup().location]",
+                            "kind": "functionapp",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageFuncAccountName'))]",
+                                "[resourceId('Microsoft.Insights/components', parameters('appInsightsFuncName'))]"
+                            ],
+                            "properties": {
+                                "siteConfig": {
+                                    "appSettings": [
+                                        {
+                                            "name": "AzureWebJobsStorage",
+                                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageFuncAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageFuncAccountName')),'2019-06-01').keys[0].value)]"
+                                        },
+                                        {
+                                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                                            "value": "node"
+                                        },
+                                        {
+                                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                                            "value": "10.14.1"
+                                        },
+                                        {
+                                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                                            "value": "~3"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    "outputs": {}
+                }
+            }
+        },
+
+        // Resource group (CDN and storage site)
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[variables('rgSiteName')]",
+            "properties": {}
+        },
+
+        // Static storage site and CDN profile with endpoint
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "siteDeployment",
+            "resourceGroup": "[variables('rgSiteName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgSiteName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                     "rgLocation": {
+                        "value": "[parameters('rgLocation')]"
+                    },
+                     "storageSiteAccountName": {
+                        "value": "[variables('storageSiteAccountName')]"
+                    },
+                    "cdnName": {
+                        "value": "[variables('cdnName')]"
+                    },
+                    "cdnEndpointName": {
+                        "value": "[parameters('cdnEndpointName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "rgLocation": {
+                            "type": "string"
+                        },
+                         "storageSiteAccountName": {
+                            "type": "string"
+                        },
+                        "cdnName": {
+                            "type": "string"
+                        },
+                        "cdnEndpointName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.Storage/storageAccounts",
+                            "apiVersion": "2019-06-01",
+                            "name": "[parameters('storageSiteAccountName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "sku": {
+                                "name": "Standard_LRS",
+                                "tier": "Standard"
+                            },
+                            "kind": "StorageV2",
+                            "properties": {
+                                "accessTier": "Hot"
+                            },
+                            "resources": [
+                                {
+                                "type": "blobServices/containers",
+                                "apiVersion": "2019-06-01",
+                                "name": "default/$web",
+                                "dependsOn": [
+                                    "[parameters('storageSiteAccountName')]"
+                                ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Microsoft.Cdn/profiles",
+                            "apiVersion": "2020-04-15",
+                            "name": "[parameters('cdnName')]",
+                            "location": "global",
+                            "sku": {
+                                "name": "Standard_Microsoft"
+                            },
+                            "properties": {}
+                        },
+                        {
+                            "type": "Microsoft.Cdn/profiles/endpoints",
+                            "apiVersion": "2020-04-15",
+                            "name": "[concat(parameters('cdnName'), '/', parameters('cdnEndpointName'))]",
+                            "location": "global",
+                            "dependsOn": [
+                                "[parameters('cdnName')]",
+                                "[parameters('storageSiteAccountName')]"
+                            ],
+                            "properties": {
+                                "originHostHeader": "[replace(replace(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageSiteAccountName')), '2019-06-01', 'Full').properties.primaryEndpoints.web,'https://',''),'/','')]",
+                                //"isHttpAllowed": "[parameters('isHttpAllowed')]",
+                                //"isHttpsAllowed": "[parameters('isHttpsAllowed')]",
+                                //"queryStringCachingBehavior": "[parameters('queryStringCachingBehavior')]",
+                                //"contentTypesToCompress": "[parameters('contentTypesToCompress')]",
+                                //"isCompressionEnabled": "[parameters('isCompressionEnabled')]",
+                                "origins": [
+                                    {
+                                        "name": "origin1",
+                                        "properties": {
+                                            // This is an undocumented way to get the regional code of a static website so we can build the correct URI
+                                            "hostName": "[replace(replace(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageSiteAccountName')), '2019-06-01', 'Full').properties.primaryEndpoints.web,'https://',''),'/','')]"
+                                    }
+                                }]
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
