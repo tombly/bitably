@@ -1,6 +1,10 @@
 
 # Bitably app
 
+An app for finding streaks in your Fitbit data, build on Azure:
+
+![Architecture Diagram](Diagram.png)
+
 ## Setting up
 
 Here's how to get the app up and running in your Azure subscription:
