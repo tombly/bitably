@@ -28,16 +28,12 @@ Here's how to get the app up and running in your Azure subscription:
 
 4. After the resources have been provisioned, we need to turn on the static website capability of our blob storage account (since setting blob service properties is not supported in ARM templates). 
    
-    Save the name of the storage account to a variable:
+    Save the name of the storage account to a variable and then apply the change:
 
     ``` bash
     site_storage_name=$(az storage account list --query "[?ends_with(name,'sitestor01')].name" -o tsv)
     echo $site_storage_name
-    ```
 
-    Then apply the change:
-
-    ``` bash
     az storage blob service-properties update --account-name $site_storage_name --static-website true --index-document index.html --404-document index.html 
     ```
 
