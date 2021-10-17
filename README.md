@@ -63,7 +63,7 @@ data_storage_name=$(az storage account list --query "[?ends_with(name,'datastor0
 data_storage_key=$(az storage account keys list --account-name $data_storage_name  --resource-group $data_rg_name --query "[0].value" -o tsv)
 
 app_rg_name=$(az group list --query "[?ends_with(name,'-app01')].name" -o tsv)
-insights_name=$(az resource list --query "[?ends_with(name,'app01in')].name" -o tsv)
+insights_name=$(az monitor app-insights component show --query "[?ends_with(name,'app01in')].name" -o tsv)
 insights_key=$(az resource show -g $app_rg_name -n $insights_name --resource-type "microsoft.insights/components" --query properties.InstrumentationKey -o tsv)
 ```
 
