@@ -176,9 +176,11 @@ Next we'll deploy the Function App. The following commands will find the names o
 func_rg=$(az group list --query "[?ends_with(name,'func01')].name" -o tsv)
 func_name=$(az functionapp list --query "[?ends_with(name,'func01')].name" -o tsv)
 
-zip functions.zip functions -r
+cd functions
+zip functions.zip . -r
 az functionapp deployment source config-zip -g $func_rg -n $func_name --src functions.zip 
 rm functions.zip
+cd ..
 ```
 
 ## Testing the app
