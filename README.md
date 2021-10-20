@@ -28,16 +28,12 @@ Here's how to get the app up and running in your Azure subscription:
 
 4. After the resources have been provisioned, we need to turn on the static website capability of our blob storage account (since setting blob service properties is not supported in ARM templates). 
    
-    Save the name of the storage account to a variable:
+    Save the name of the storage account to a variable and then apply the change:
 
     ``` bash
     site_storage_name=$(az storage account list --query "[?ends_with(name,'sitestor01')].name" -o tsv)
     echo $site_storage_name
-    ```
 
-    Then apply the change:
-
-    ``` bash
     az storage blob service-properties update --account-name $site_storage_name --static-website true --index-document index.html --404-document index.html 
     ```
 
@@ -67,7 +63,7 @@ data_storage_name=$(az storage account list --query "[?ends_with(name,'datastor0
 data_storage_key=$(az storage account keys list --account-name $data_storage_name  --resource-group $data_rg_name --query "[0].value" -o tsv)
 
 app_rg_name=$(az group list --query "[?ends_with(name,'-app01')].name" -o tsv)
-insights_name=$(az resource list --query "[?ends_with(name,'app01in')].name" -o tsv)
+insights_name=$(az monitor app-insights component show --query "[?ends_with(name,'app01in')].name" -o tsv)
 insights_key=$(az resource show -g $app_rg_name -n $insights_name --resource-type "microsoft.insights/components" --query properties.InstrumentationKey -o tsv)
 ```
 
@@ -180,9 +176,11 @@ Next we'll deploy the Function App. The following commands will find the names o
 func_rg=$(az group list --query "[?ends_with(name,'func01')].name" -o tsv)
 func_name=$(az functionapp list --query "[?ends_with(name,'func01')].name" -o tsv)
 
-zip functions.zip functions -r
+cd functions
+zip functions.zip . -r
 az functionapp deployment source config-zip -g $func_rg -n $func_name --src functions.zip 
 rm functions.zip
+cd ..
 ```
 
 ## Testing the app
