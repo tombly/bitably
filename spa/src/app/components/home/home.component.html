@@ -16,18 +16,24 @@
             <button mat-flat-button color="accent">Sign Out</button>
         </form>
 
+        <form [formGroup]="fetchForm" (ngSubmit)="onFetch()" style="text-align: center;">
+            <mat-card-content>
+            </mat-card-content>
+            <button mat-flat-button color="accent">Fetch from Fitbit</button>
+        </form>
+
     </mat-card>
 
     <mat-card class="box" style="min-width: 100px; min-height: 120px;">
 
         <mat-card-header>
-            <mat-card-title>Days</mat-card-title>
+            <mat-card-title>History</mat-card-title>
         </mat-card-header>
 
         <mat-card-content style="margin: 40px;">
 
             <div style="font-size: 60px" *ngIf="dayCount !== undefined">
-                {{dayCount}}
+                {{dayCount}}<span style="font-size: 24px">&nbsp;days</span>
             </div>
             <div style="font-size: 60px" *ngIf="dayCount === undefined">
                 -
@@ -36,5 +42,22 @@
 
     </mat-card>
 
+    <mat-card class="box" style="min-width: 100px; min-height: 120px;">
+
+        <mat-card-header>
+            <mat-card-title>8+ Hr Streak</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content style="margin: 40px;">
+
+            <div style="font-size: 60px" *ngIf="scoreCount !== undefined">
+                {{scoreCount}}<span style="font-size: 24px">&nbsp;days</span>
+            </div>
+            <div style="font-size: 60px" *ngIf="scoreCount === undefined">
+                -
+            </div>
+        </mat-card-content>
+
+    </mat-card>
 
 </div>

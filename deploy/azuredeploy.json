@@ -757,6 +757,33 @@
                         {
                             "type": "Microsoft.ApiManagement/service/apis/operations",
                             "apiVersion": "2021-01-01-preview",
+                            "name": "[concat(parameters('apimServiceName'),'/bitably/sleep-day-hours-streak')]",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'bitably')]",
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                            ],
+                            "properties": {
+                                "displayName": "Sleep Day Hours Streak",
+                                "method": "GET",
+                                "urlTemplate": "/sleep/days/hourstreak",
+                                "templateParameters": [],
+                                "request": {
+                                    "queryParameters": [
+                                        {
+                                            "name": "userId",
+                                            "values": [],
+                                            "type": null
+                                        }
+                                    ],
+                                    "headers": [],
+                                    "representations": []
+                                },
+                                "responses": []
+                            }
+                        },
+                        {
+                            "type": "Microsoft.ApiManagement/service/apis/operations",
+                            "apiVersion": "2021-01-01-preview",
                             "name": "[concat(parameters('apimServiceName'),'/fetchfunction/fetch')]",
                             "dependsOn": [
                                 "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'fetchfunction')]",

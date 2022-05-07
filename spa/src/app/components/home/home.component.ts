@@ -12,8 +12,11 @@ import { ApiService } from 'src/app/services/api/api.service';
 export class HomeComponent implements OnInit {
 
   dayCount?: number = undefined;
+  scoreCount?: number = undefined;
   userName: string = '';
+  userId: string = '';
   signOutForm = this.formBuilder.group({});
+  fetchForm = this.formBuilder.group({});
 
   constructor(
     private formBuilder: FormBuilder,
@@ -23,11 +26,14 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.userName = localStorage.getItem('userName') || '[name]';
+    this.userId = localStorage.getItem('userId') || '';
 
-    const userId: string = localStorage.getItem('userId') || '';
+    this.apiService.sleepDayCount(this.userId).subscribe(response => {
+      this.dayCount = response.count;
+    });
 
-    this.apiService.sleepDayCount(userId).subscribe(sleepCount => {
-      this.dayCount = sleepCount.count;
+    this.apiService.hourStreak(this.userId).subscribe(response => {
+      this.scoreCount = response.count;
     });
   }
 
@@ -37,5 +43,9 @@ export class HomeComponent implements OnInit {
     localStorage.removeItem('userId');
 
     this.router.navigate(['/', 'landing'])
+  }
+
+  onFetch(): void {
+    this.apiService.fetch(this.userId);
   }
 }

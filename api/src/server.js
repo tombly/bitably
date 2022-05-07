@@ -41,12 +41,18 @@ async function main() {
         });
     });
 
-    //    client.trackNodeHttpRequest({ request: req, response: res });
-    cosmosWrapper.sleepDayCount(req.query.userId).then(count => {
-        res.send(`{"count":"${count}"}`);
-        //client.trackEvent({ name: "SleepDayCount", properties: { count: count } });
+    // It's limited in how intricate our stats can be if we stay in the
+    // world of SQL, so we just use cosmos for data storage and retrieval
+    // and do all our calculations here.
+    //
+    app.get('/sleep/days/hourstreak', (req, res) => {
+        //    client.trackNodeHttpRequest({ request: req, response: res });
+        cosmosWrapper.getSleep(req.query.userId).then(items => {
+            var count = calc.sleepHoursStreak(items, 8);
+            res.send(`{"count":"${count}"}`);
+            //client.trackEvent({ name: "SleepDayCount", properties: { count: count } });
+        });
     });
-});
 
     app.get('/ping', (req, res) => {
         //client.trackNodeHttpRequest({ request: req, response: res });

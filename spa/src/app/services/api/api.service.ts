@@ -8,12 +8,32 @@ export interface SleepCountDto {
   count: number;
 }
 
+export interface ScoreCountDto {
+  count: number;
+}
+
+export interface FetchDto {
+  accepted: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
 
   constructor(private http: HttpClient) {
+  }
+
+  fetch(userId: string): void {
+    console.log(`fetch(${userId})`)
+    this.http.get<FetchDto>(`${environment.apiUrl}/fetch`).subscribe(data => {
+        console.log(`Fetch result: ${data}`);
+    });
+  }
+
+  hourStreak(userId: string): Observable<ScoreCountDto> {
+    console.log(`hourStreak(${userId})`)
+    return this.http.get<ScoreCountDto>(`${environment.apiUrl}/sleep/days/hourstreak?userId=${userId}`);
   }
 
   sleepDayCount(userId: string): Observable<SleepCountDto> {
