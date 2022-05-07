@@ -46,9 +46,17 @@
             // Publisher info for the API management service.
             // Example: "MyCorp", etc.
             "defaultValue": "MyCorp"
+        },
+        // Azure Active Directory tenant ID to associate the key vault with.
+        // Example: "8082ee13-8438-437e-8568-f39cda6bf586", etc.
+        "adTenantId": {
+            "type": "string",
+            "minLength": 36,
+            "maxLength": 36
         }
     },
     "variables": {
+        // Resource group names
           "rgPrefix": "[concat(parameters('nameEnvironment'), '-', parameters('nameRegion'), '-', parameters('nameApp'), '-rg')]",
           "resPrefix": "[concat(parameters('nameEnvironment'), parameters('nameRegion'), parameters('nameApp'))]",
           "rgAcrName": "[concat(variables('rgPrefix'), '-acr01')]",
@@ -57,21 +65,159 @@
           "rgAPIMName": "[concat(variables('rgPrefix'), '-apim01')]",
           "rgFuncName": "[concat(variables('rgPrefix'), '-func01')]",
           "rgSiteName": "[concat(variables('rgPrefix'), '-site01')]",
-          "registriesName": "[concat(variables('resPrefix'), 'acr01')]",
-          "storageDataAccountName": "[concat(variables('resPrefix'), 'datastor01')]",
-          "storageSiteAccountName": "[concat(variables('resPrefix'), 'sitestor01')]",
-          "cosmosDataAccountName": "[concat(variables('resPrefix'), 'datacos01')]",
-          "appName": "[concat(variables('resPrefix'), 'app01')]",
-          "appInsightsAppName": "[concat(variables('resPrefix'), 'app01in')]",
+          "rgConfigName": "[concat(variables('rgPrefix'), '-conf01')]",
+
+        // Service instance names
+          "registriesName": "[concat(variables('resPrefix'), 'registry01')]",
+          "storageDataAccountName": "[concat(variables('resPrefix'), 'storagedata01')]",
+          "storageSiteAccountName": "[concat(variables('resPrefix'), 'storagesite01')]",
+          "cosmosDataAccountName": "[concat(variables('resPrefix'), 'cosmos01')]",
+          "appName": "[concat(variables('resPrefix'), 'webapp01')]",
+          "appInsightsAppName": "[concat(variables('resPrefix'), 'insightsapp01')]",
           "aspName": "[concat(variables('resPrefix'), 'asp01')]",
           "cdnName": "[concat(variables('resPrefix'), 'cdn01')]",
-          "functionAppName": "[concat(variables('resPrefix'), 'func01')]",
-          "appInsightsFuncName": "[concat(variables('resPrefix'), 'func01in')]",
-          "storageFuncAccountName": "[concat(variables('resPrefix'), 'func01stor')]",
+          "functionAppName": "[concat(variables('resPrefix'), 'funcapp01')]",
+          "appInsightsFuncName": "[concat(variables('resPrefix'), 'insightsfunc01')]",
+          "storageFuncAccountName": "[concat(variables('resPrefix'), 'storagefunc01')]",
           "apimServiceName" : "[concat(variables('resPrefix'), 'apim01')]",
+          "configServiceName" : "[concat(variables('resPrefix'), 'config01')]",
+          "vaultServiceName" : "[concat(variables('resPrefix'), 'vault01')]",
+
+        // APIM API names
           "apimApiName" : "BitablyAPI",
           "apimFunctionName" : "FetchFunctionAPI"
     },
+    "resources":[
+        
+        // Resource group (Configuration)
+        {
+            "type": "Microsoft.Resources/resourceGroups",
+            "apiVersion": "2018-05-01",
+            "location": "[parameters('rgLocation')]",
+            "name": "[variables('rgConfigName')]",
+            "properties": {}
+        },
+
+        // App configuration
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "configDeployment",
+            "resourceGroup": "[variables('rgConfigName')]",
+            "dependsOn": [
+                "[variables('rgConfigName')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                 "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "rgLocation": {
+                        "value": "[parameters('rgLocation')]"
+                    },
+                    "configServiceName": {
+                        "value": "[variables('configServiceName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "rgLocation": {
+                            "type": "string"
+                        },
+                        "configServiceName": {
+                            "type": "string"
+                        }
+                    },                    
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.AppConfiguration/configurationStores",
+                            "apiVersion": "2021-10-01-preview",
+                            "name": "[parameters('configServiceName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "sku": {
+                                "name": "free"
+                            },
+                            "properties": {
+                                "encryption": {},
+                                "disableLocalAuth": false,
+                                "softDeleteRetentionInDays": 0,
+                                "enablePurgeProtection": false
+                            }
+                        }
+                    ]
+                },
+                "outputs": {}
+            }
+        },
+
+        // Key vault
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "vaultDeployment",
+            "resourceGroup": "[variables('rgConfigName')]",
+            "dependsOn": [
+                "[variables('rgConfigName')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                 "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "rgLocation": {
+                        "value": "[parameters('rgLocation')]"
+                    },
+                    "vaultServiceName": {
+                        "value": "[variables('vaultServiceName')]"
+                    },
+                    "tenantId": {
+                        "value": "[parameters('adTenantId')]"
+                    }
+                },
+                "template": {        
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "rgLocation": {
+                            "type": "string"
+                        },
+                        "vaultServiceName": {
+                            "type": "string"
+                        },
+                        "tenantId": {
+                            "type": "string"
+                        }
+                    },          
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "Microsoft.KeyVault/vaults",
+                            "apiVersion": "2021-11-01-preview",
+                            "name": "[parameters('vaultServiceName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "properties": {
+                                "sku": {
+                                    "family": "A",
+                                    "name": "Standard"
+                                },
+                                "tenantId": "[parameters('tenantId')]",
+                                "accessPolicies": [],
+                                "enableSoftDelete": false,
+                                "enableRbacAuthorization": false,
+                                "vaultUri": "[concat('https://', parameters('vaultServiceName'), '.vault.azure.net/')]",
+                                "publicNetworkAccess": "Enabled"
+                            }
+                        }
+                    ]
+                },
+                "outputs": {}
+            }
+        },
     "resources": [
 
         // Resource group (Container registry)
