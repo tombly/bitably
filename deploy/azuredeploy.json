@@ -544,6 +544,19 @@
                                 "ApplicationId": "[parameters('appInsightsAppName')]",
                                 "Request_Source": "IbizaWebAppExtensionCreate"
                             }
+                        },
+                        {
+                            "type": "Microsoft.Web/sites/config",
+                            "apiVersion": "2021-03-01",
+                            "name": "[concat(parameters('appName'), '/web')]",
+                            "location": "[parameters('rgLocation')]",
+                            "dependsOn": [
+                                "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+                            ],
+                            "properties": {
+                                "httpLoggingEnabled": true,
+                                "logsDirectorySizeLimit": 35
+                            }
                         }
                     ]
                 }
@@ -674,8 +687,8 @@
                                 "displayName": "[parameters('apimFunctionName')]",
                                 "apiRevision": "1",
                                 "subscriptionRequired": false,                                
-                                "serviceUrl": "[concat('https://',parameters('functionAppName'),'.azurewebsites.net')]",
-                                "path": "func",
+                                "serviceUrl": "[concat('https://',parameters('functionAppName'),'.azurewebsites.net/api/orchestrators/FetchOrchestrator')]",
+                                "path": "fetch",
                                 "protocols": [
                                     "https"
                                 ],
@@ -752,7 +765,7 @@
                             "properties": {
                                 "displayName": "Fetch",
                                 "method": "GET",
-                                "urlTemplate": "/api/orchestrators/FetchOrchestrator",
+                                "urlTemplate": "/",
                                 "templateParameters": [],
                                 "responses": []
                             }
