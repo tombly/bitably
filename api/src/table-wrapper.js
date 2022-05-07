@@ -1,11 +1,14 @@
-const config = require('./config.js');
+
 const { TableClient, AzureNamedKeyCredential } = require("@azure/data-tables");
 
 const tableName = 'datastore';
+let config;
 
 exports.TableWrapper = TableWrapper;
 
-function TableWrapper() {}
+function TableWrapper(c) {
+    config = c;
+}
 
 TableWrapper.prototype.register = async function(userId, accessToken) {
     console.log(`register(${userId},${accessToken.slice(0, 8)}...)`);

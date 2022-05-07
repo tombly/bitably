@@ -1,12 +1,15 @@
-const config = require('./config.js');
+
 const { CosmosClient } = require("@azure/cosmos");
 
 const databaseName = 'Biometric';
 const containerName = 'Sleep';
+let config;
 
 exports.CosmosWrapper = CosmosWrapper;
 
-function CosmosWrapper() {}
+function CosmosWrapper(c) {
+    config = c;
+}
 
 CosmosWrapper.prototype.sleepDayCount = async function(userId) {
     console.log(`sleepDayCount(${userId})`);
