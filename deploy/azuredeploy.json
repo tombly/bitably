@@ -324,7 +324,7 @@
                             ],
                             "properties": {
                                 "status": "enabled",
-                                "scope": "bitapp:latest",
+                                "scope": "bitably-api:latest",
                                 "actions": [
                                     "push"
                                 ],
@@ -506,7 +506,7 @@
                             "properties": {
                                 "serverFarmId": "[parameters('aspName')]",
                                 "siteConfig": {
-                                    "linuxFxVersion": "[concat('DOCKER|',parameters('registriesName'),'.azurecr.io/bitapp:latest')]",
+                                    "linuxFxVersion": "[concat('DOCKER|',parameters('registriesName'),'.azurecr.io/bitably-api:latest')]",
                                     "acrUseManagedIdentityCreds": false,
                                     "appSettings": [
                                         {
@@ -524,6 +524,10 @@
                                         {
                                             "name": "XDT_MicrosoftApplicationInsights_Mode",
                                             "value": "default"
+                                        },
+                                        {
+                                            "name": "DOCKER_ENABLE_CI",
+                                            "value": "true"
                                         }
                                     ]                                   
                                 },
