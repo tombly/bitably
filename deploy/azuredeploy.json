@@ -1,51 +1,51 @@
 {
     //
-    // To deploy: az deployment sub create --location WestUS --template-file azuredeploy.json   
+    // To deploy: az deployment sub create --location WestUS --template-file azuredeploy.json --parameters azuredeploy.parameters.json
     //
     "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        // Used as part of the resource naming.
+        // Example: "dev", "test", or "prod"
         "nameEnvironment": {
             "type": "string",
-            // Used as part of the resource naming.
-            // Example: "dev", "test", or "prod"
-            "defaultValue": "dev"
+            "minLength": 1
         },
+        // Used as part of the resource naming.
+        // Example: "eus", "eu2", "uks", etc.
         "nameRegion": {
             "type": "string",
-            // Used as part of the resource naming.
-            // Example: "eus", "eu2", "uks", etc.
-            "defaultValue": "eus"
+            "minLength": 1
         },
+        // Used as part of the resource naming.
+        // Example: "myapp", "fitapp", etc.
         "nameApp": {
             "type": "string",
-            // Used as part of the resource naming.
-            // Example: "myapp", "fitapp", etc.
-            "defaultValue": "bitably"
+            "minLength": 1
         },
+        // The subdomain of the CDN endpoint.
+        // Example: "myapp", "fitapp", etc.
         "cdnEndpointName": {
             "type": "string",
-            // The subdomain of the CDN endpoint.
-            // Example: "myapp", "fitapp", etc.
-            "defaultValue": "bitably"
+            "minLength": 1
         },
+        // The region in which all resources are created.
+        // Example: "westus3", "eastus", "uksouth", etc.
         "rgLocation": {
             "type": "string",
-            // The region in which all resources are created.
-            // Example: "westus3", "eastus", "uksouth", etc.
-            "defaultValue": "eastus"
+            "minLength": 1
         },
-        "apimPublisherEmail": {
-            "type": "string",
-            // Publisher info for the API management service.
-            // Example: "jane@aol.com", etc.
-            "defaultValue": "jane@aol.com"
-        },
+        // Publisher info for the API management service.
+        // Example: "MyCorp", etc.
         "apimPublisherName": {
             "type": "string",
-            // Publisher info for the API management service.
-            // Example: "MyCorp", etc.
-            "defaultValue": "MyCorp"
+            "minLength": 1
+        },
+        // Publisher info for the API management service.
+        // Example: "jane@mycorp.com", etc.
+        "apimPublisherEmail": {
+            "type": "string",
+            "minLength": 1
         },
         // Azure Active Directory tenant ID to associate the key vault with.
         // Example: "8082ee13-8438-437e-8568-f39cda6bf586", etc.
@@ -218,7 +218,6 @@
                 "outputs": {}
             }
         },
-    "resources": [
 
         // Resource group (Container registry)
         {

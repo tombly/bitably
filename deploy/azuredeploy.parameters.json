@@ -1,0 +1,30 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "nameEnvironment": {
+            "value": "dev"
+        },
+        "nameRegion": {
+            "value": "eus"
+        },
+        "nameApp": {
+            "value": "myapp"
+        },
+        "cdnEndpointName": {
+            "value": "myapp"
+        },
+        "rgLocation": {
+            "value": "eastus"
+        },
+        "apimPublisherName": {
+            "value": ""
+        },
+        "apimPublisherEmail": {
+            "value": ""
+        },
+        "adTenantId": {
+            "value": "00000000-0000-0000-0000-000000000000"
+        }
+    }
+}
