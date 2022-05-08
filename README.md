@@ -23,7 +23,7 @@ Here's how to get the app up and running in your Azure subscription:
 
 2. Now that we know how we want to name our resources, the next step is to update the parameters file that supplies the inputs to our ARM template. Open up the `deploy/azuredeploy.parameters.json` file and edit the parameters `nameEnvironment`, `nameRegion`, `nameApp` using VS Code. Be sure to install the Azure Resource Manager (ARM) Tools for Visual Studio Code (Preview) extension so that you get the nice syntax highlighting and linting.
 
-    In addition, set the subdomain of the CDN endpoint (the `cdnEndpointName` parameter) as you like and the API Management service's publishing info `apimPublisherEmail` and `apimPublisherName`. Finally, set the `rgLocation` parameter to the region that you'd like all the resources to be created in.
+    In addition, set the subdomain of the CDN endpoint (the `cdnEndpointName` parameter) as you like and the API Management service's publishing info `apimPublisherEmail` and `apimPublisherName`. Set the `rgLocation` parameter to the region that you'd like all the resources to be created in and finally, set the `adTenantId` parameter to your subscription's Azure AD tenant ID.
 
 3. With the parameters set, let's deploy the ARM template to create all the resources (note that you'll need to install the Azure CLI and use `az login` first to login to your subscription):
     ``` bash

@@ -1,54 +1,28 @@
 {
-    //
-    // To deploy: az deployment sub create --location WestUS --template-file azuredeploy.json --parameters azuredeploy.parameters.json
-    //
     "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        // Used as part of the resource naming.
-        // Example: "dev", "test", or "prod"
         "nameEnvironment": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
         },
-        // Used as part of the resource naming.
-        // Example: "eus", "eu2", "uks", etc.
         "nameRegion": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
         },
-        // Used as part of the resource naming.
-        // Example: "myapp", "fitapp", etc.
         "nameApp": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
         },
-        // The subdomain of the CDN endpoint.
-        // Example: "myapp", "fitapp", etc.
         "cdnEndpointName": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
         },
-        // The region in which all resources are created.
-        // Example: "westus3", "eastus", "uksouth", etc.
         "rgLocation": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
         },
-        // Publisher info for the API management service.
-        // Example: "MyCorp", etc.
         "apimPublisherName": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
         },
-        // Publisher info for the API management service.
-        // Example: "jane@mycorp.com", etc.
         "apimPublisherEmail": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
         },
-        // Azure Active Directory tenant ID to associate the key vault with.
-        // Example: "8082ee13-8438-437e-8568-f39cda6bf586", etc.
         "adTenantId": {
             "type": "string",
             "minLength": 36,
@@ -56,40 +30,35 @@
         }
     },
     "variables": {
-        // Resource group names
-          "rgPrefix": "[concat(parameters('nameEnvironment'), '-', parameters('nameRegion'), '-', parameters('nameApp'), '-rg')]",
-          "resPrefix": "[concat(parameters('nameEnvironment'), parameters('nameRegion'), parameters('nameApp'))]",
-          "rgAcrName": "[concat(variables('rgPrefix'), '-acr01')]",
-          "rgDataName": "[concat(variables('rgPrefix'), '-data01')]",
-          "rgAppName": "[concat(variables('rgPrefix'), '-app01')]",
-          "rgAPIMName": "[concat(variables('rgPrefix'), '-apim01')]",
-          "rgFuncName": "[concat(variables('rgPrefix'), '-func01')]",
-          "rgSiteName": "[concat(variables('rgPrefix'), '-site01')]",
-          "rgConfigName": "[concat(variables('rgPrefix'), '-conf01')]",
+        "rgPrefix": "[concat(parameters('nameEnvironment'), '-', parameters('nameRegion'), '-', parameters('nameApp'), '-rg')]",
+        "resPrefix": "[concat(parameters('nameEnvironment'), parameters('nameRegion'), parameters('nameApp'))]",
+        "rgAcrName": "[concat(variables('rgPrefix'), '-acr01')]",
+        "rgDataName": "[concat(variables('rgPrefix'), '-data01')]",
+        "rgAppName": "[concat(variables('rgPrefix'), '-app01')]",
+        "rgAPIMName": "[concat(variables('rgPrefix'), '-apim01')]",
+        "rgFuncName": "[concat(variables('rgPrefix'), '-func01')]",
+        "rgSiteName": "[concat(variables('rgPrefix'), '-site01')]",
+        "rgConfigName": "[concat(variables('rgPrefix'), '-conf01')]",
 
-        // Service instance names
-          "registriesName": "[concat(variables('resPrefix'), 'registry01')]",
-          "storageDataAccountName": "[concat(variables('resPrefix'), 'storagedata01')]",
-          "storageSiteAccountName": "[concat(variables('resPrefix'), 'storagesite01')]",
-          "cosmosDataAccountName": "[concat(variables('resPrefix'), 'cosmos01')]",
-          "appName": "[concat(variables('resPrefix'), 'webapp01')]",
-          "appInsightsAppName": "[concat(variables('resPrefix'), 'insightsapp01')]",
-          "aspName": "[concat(variables('resPrefix'), 'asp01')]",
-          "cdnName": "[concat(variables('resPrefix'), 'cdn01')]",
-          "functionAppName": "[concat(variables('resPrefix'), 'funcapp01')]",
-          "appInsightsFuncName": "[concat(variables('resPrefix'), 'insightsfunc01')]",
-          "storageFuncAccountName": "[concat(variables('resPrefix'), 'storagefunc01')]",
-          "apimServiceName" : "[concat(variables('resPrefix'), 'apim01')]",
-          "configServiceName" : "[concat(variables('resPrefix'), 'config01')]",
-          "vaultServiceName" : "[concat(variables('resPrefix'), 'vault01')]",
+        "registriesName": "[concat(variables('resPrefix'), 'registry01')]",
+        "storageDataAccountName": "[concat(variables('resPrefix'), 'storagedata01')]",
+        "storageSiteAccountName": "[concat(variables('resPrefix'), 'storagesite01')]",
+        "cosmosDataAccountName": "[concat(variables('resPrefix'), 'cosmos01')]",
+        "appName": "[concat(variables('resPrefix'), 'webapp01')]",
+        "appInsightsAppName": "[concat(variables('resPrefix'), 'insightsapp01')]",
+        "aspName": "[concat(variables('resPrefix'), 'asp01')]",
+        "cdnName": "[concat(variables('resPrefix'), 'cdn01')]",
+        "functionAppName": "[concat(variables('resPrefix'), 'funcapp01')]",
+        "appInsightsFuncName": "[concat(variables('resPrefix'), 'insightsfunc01')]",
+        "storageFuncAccountName": "[concat(variables('resPrefix'), 'storagefunc01')]",
+        "apimServiceName": "[concat(variables('resPrefix'), 'apim01')]",
+        "configServiceName": "[concat(variables('resPrefix'), 'config01')]",
+        "vaultServiceName": "[concat(variables('resPrefix'), 'vault01')]",
 
-        // APIM API names
-          "apimApiName" : "BitablyAPI",
-          "apimFunctionName" : "FetchFunctionAPI"
+        "apimApiName": "BitablyAPI",
+        "apimFunctionName": "FetchFunctionAPI"
     },
-    "resources":[
-        
-        // Resource group (Configuration)
+    "resources": [
         {
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
@@ -97,11 +66,9 @@
             "name": "[variables('rgConfigName')]",
             "properties": {}
         },
-
-        // App configuration
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "name": "configDeployment",
             "resourceGroup": "[variables('rgConfigName')]",
             "dependsOn": [
@@ -109,7 +76,7 @@
             ],
             "properties": {
                 "mode": "Incremental",
-                 "expressionEvaluationOptions": {
+                "expressionEvaluationOptions": {
                     "scope": "inner"
                 },
                 "parameters": {
@@ -130,7 +97,7 @@
                         "configServiceName": {
                             "type": "string"
                         }
-                    },                    
+                    },
                     "variables": {},
                     "resources": [
                         {
@@ -153,11 +120,9 @@
                 "outputs": {}
             }
         },
-
-        // Key vault
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "name": "vaultDeployment",
             "resourceGroup": "[variables('rgConfigName')]",
             "dependsOn": [
@@ -165,7 +130,7 @@
             ],
             "properties": {
                 "mode": "Incremental",
-                 "expressionEvaluationOptions": {
+                "expressionEvaluationOptions": {
                     "scope": "inner"
                 },
                 "parameters": {
@@ -179,7 +144,7 @@
                         "value": "[parameters('adTenantId')]"
                     }
                 },
-                "template": {        
+                "template": {
                     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
                     "contentVersion": "1.0.0.0",
                     "parameters": {
@@ -192,7 +157,7 @@
                         "tenantId": {
                             "type": "string"
                         }
-                    },          
+                    },
                     "variables": {},
                     "resources": [
                         {
@@ -218,8 +183,6 @@
                 "outputs": {}
             }
         },
-
-        // Resource group (Container registry)
         {
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
@@ -227,16 +190,14 @@
             "name": "[variables('rgAcrName')]",
             "properties": {}
         },
-
-        // Container registry
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "name": "registryDeployment",
             "resourceGroup": "[variables('rgAcrName')]",
             "dependsOn": [
                 "[variables('rgAcrName')]",
-                "appServiceDeployment"  // Need the app service to go first since we need the SCM URI
+                "appServiceDeployment"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -328,22 +289,14 @@
                                 "actions": [
                                     "push"
                                 ],
-                                // We have to specify the resource group name here
-                                // since the app service resource that we need to
-                                // grab the SCM URI from is in another group. But,
-                                // note that we need to delay the evaluation of this
-                                // by specifying this template with an inner scope
-                                // (see expressionEvaluationOptions) and pass in
-                                // the parameters that we need.
                                 "serviceUri": "[concat(list(resourceId(parameters('rgAppName'), 'Microsoft.Web/sites/config', parameters('appName'), 'publishingcredentials'), '2015-08-01').properties.scmUri, '/docker/hook')]"
                             }
-                        }]
+                        }
+                    ]
                 },
                 "outputs": {}
             }
         },
-
-        // Resource group (Data stores)
         {
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
@@ -351,11 +304,9 @@
             "name": "[variables('rgDataName')]",
             "properties": {}
         },
-
-        // Storage account (data)
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "name": "storageDeployment",
             "resourceGroup": "[variables('rgDataName')]",
             "dependsOn": [
@@ -368,25 +319,25 @@
                     "contentVersion": "1.0.0.0",
                     "parameters": {},
                     "variables": {},
-                    "resources": [{
-                        "type": "Microsoft.Storage/storageAccounts",
-                        "apiVersion": "2017-10-01",
-                        "name": "[variables('storageDataAccountName')]",
-                        "location": "[parameters('rgLocation')]",
-                        "kind": "StorageV2",
-                        "sku": {
-                            "name": "Standard_LRS"
+                    "resources": [
+                        {
+                            "type": "Microsoft.Storage/storageAccounts",
+                            "apiVersion": "2017-10-01",
+                            "name": "[variables('storageDataAccountName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "kind": "StorageV2",
+                            "sku": {
+                                "name": "Standard_LRS"
+                            }
                         }
-                    }],
+                    ],
                     "outputs": {}
                 }
             }
         },
-        
-        // Cosmos DB
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "name": "cosmosDeployment",
             "resourceGroup": "[variables('rgDataName')]",
             "dependsOn": [
@@ -399,27 +350,29 @@
                     "contentVersion": "1.0.0.0",
                     "parameters": {},
                     "variables": {},
-                    "resources": [{
-                        "type": "Microsoft.DocumentDB/databaseAccounts",
-                        "apiVersion": "2021-04-15",
-                        "name": "[variables('cosmosDataAccountName')]",
-                        "location": "[parameters('rgLocation')]",
-                        "properties": {
-                            "enableFreeTier": true,
-                            "databaseAccountOfferType": "Standard",
-                            "consistencyPolicy": {
-                                "defaultConsistencyLevel": "Session"
-                            },
-                            "locations": [{
-                                "locationName": "[parameters('rgLocation')]"
-                            }]
+                    "resources": [
+                        {
+                            "type": "Microsoft.DocumentDB/databaseAccounts",
+                            "apiVersion": "2021-04-15",
+                            "name": "[variables('cosmosDataAccountName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "properties": {
+                                "enableFreeTier": true,
+                                "databaseAccountOfferType": "Standard",
+                                "consistencyPolicy": {
+                                    "defaultConsistencyLevel": "Session"
+                                },
+                                "locations": [
+                                    {
+                                        "locationName": "[parameters('rgLocation')]"
+                                    }
+                                ]
+                            }
                         }
-                    }]
+                    ]
                 }
             }
         },
-
-        // Resource group (App service)
         {
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
@@ -427,11 +380,9 @@
             "name": "[variables('rgAppName')]",
             "properties": {}
         },
-
-        // App service
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "name": "appServiceDeployment",
             "resourceGroup": "[variables('rgAppName')]",
             "dependsOn": [
@@ -466,16 +417,16 @@
                         "rgLocation": {
                             "type": "string"
                         },
-                         "appName": {
+                        "appName": {
                             "type": "string"
                         },
-                         "aspName": {
+                        "aspName": {
                             "type": "string"
                         },
-                         "registriesName": {
+                        "registriesName": {
                             "type": "string"
                         },
-                         "appInsightsAppName": {
+                        "appInsightsAppName": {
                             "type": "string"
                         }
                     },
@@ -529,7 +480,7 @@
                                             "name": "DOCKER_ENABLE_CI",
                                             "value": "true"
                                         }
-                                    ]                                   
+                                    ]
                                 },
                                 "resources": []
                             }
@@ -562,8 +513,6 @@
                 }
             }
         },
-
-        // Resource group (APIM)
         {
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
@@ -571,11 +520,9 @@
             "name": "[variables('rgAPIMName')]",
             "properties": {}
         },
-
-        // API Management
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "name": "apimDeployment",
             "resourceGroup": "[variables('rgAPIMName')]",
             "dependsOn": [
@@ -615,7 +562,7 @@
                 "template": {
                     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
                     "contentVersion": "1.0.0.0",
-                        "parameters": {
+                    "parameters": {
                         "rgLocation": {
                             "type": "string"
                         },
@@ -686,7 +633,7 @@
                             "properties": {
                                 "displayName": "[parameters('apimFunctionName')]",
                                 "apiRevision": "1",
-                                "subscriptionRequired": false,                                
+                                "subscriptionRequired": false,
                                 "serviceUrl": "[concat('https://',parameters('functionAppName'),'.azurewebsites.net/api/orchestrators/FetchOrchestrator')]",
                                 "path": "fetch",
                                 "protocols": [
@@ -802,8 +749,6 @@
                 }
             }
         },
-
-        // Resource group (functions)
         {
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
@@ -811,11 +756,9 @@
             "name": "[variables('rgFuncName')]",
             "properties": {}
         },
-
-        // Durable function with storage account and app insights
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "name": "functionDeployment",
             "resourceGroup": "[variables('rgFuncName')]",
             "dependsOn": [
@@ -921,8 +864,6 @@
                 }
             }
         },
-
-        // Resource group (CDN and storage site)
         {
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
@@ -930,11 +871,9 @@
             "name": "[variables('rgSiteName')]",
             "properties": {}
         },
-
-        // Static storage site and CDN profile with endpoint
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2017-05-10",
+            "apiVersion": "2018-05-01",
             "name": "siteDeployment",
             "resourceGroup": "[variables('rgSiteName')]",
             "dependsOn": [
@@ -946,10 +885,10 @@
                     "scope": "inner"
                 },
                 "parameters": {
-                     "rgLocation": {
+                    "rgLocation": {
                         "value": "[parameters('rgLocation')]"
                     },
-                     "storageSiteAccountName": {
+                    "storageSiteAccountName": {
                         "value": "[variables('storageSiteAccountName')]"
                     },
                     "cdnName": {
@@ -966,7 +905,7 @@
                         "rgLocation": {
                             "type": "string"
                         },
-                         "storageSiteAccountName": {
+                        "storageSiteAccountName": {
                             "type": "string"
                         },
                         "cdnName": {
@@ -993,12 +932,12 @@
                             },
                             "resources": [
                                 {
-                                "type": "blobServices/containers",
-                                "apiVersion": "2019-06-01",
-                                "name": "default/$web",
-                                "dependsOn": [
-                                    "[parameters('storageSiteAccountName')]"
-                                ]
+                                    "type": "blobServices/containers",
+                                    "apiVersion": "2019-06-01",
+                                    "name": "default/$web",
+                                    "dependsOn": [
+                                        "[parameters('storageSiteAccountName')]"
+                                    ]
                                 }
                             ]
                         },
@@ -1023,19 +962,14 @@
                             ],
                             "properties": {
                                 "originHostHeader": "[replace(replace(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageSiteAccountName')), '2019-06-01', 'Full').properties.primaryEndpoints.web,'https://',''),'/','')]",
-                                //"isHttpAllowed": "[parameters('isHttpAllowed')]",
-                                //"isHttpsAllowed": "[parameters('isHttpsAllowed')]",
-                                //"queryStringCachingBehavior": "[parameters('queryStringCachingBehavior')]",
-                                //"contentTypesToCompress": "[parameters('contentTypesToCompress')]",
-                                //"isCompressionEnabled": "[parameters('isCompressionEnabled')]",
                                 "origins": [
                                     {
                                         "name": "origin1",
                                         "properties": {
-                                            // This is an undocumented way to get the regional code of a static website so we can build the correct URI
                                             "hostName": "[replace(replace(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageSiteAccountName')), '2019-06-01', 'Full').properties.primaryEndpoints.web,'https://',''),'/','')]"
+                                        }
                                     }
-                                }]
+                                ]
                             }
                         }
                     ]

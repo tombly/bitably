@@ -18,10 +18,10 @@
             "value": "eastus"
         },
         "apimPublisherName": {
-            "value": ""
+            "value": "MyCorp"
         },
         "apimPublisherEmail": {
-            "value": ""
+            "value": "a@a.com"
         },
         "adTenantId": {
             "value": "00000000-0000-0000-0000-000000000000"
