@@ -961,6 +961,7 @@
                                 "[parameters('storageSiteAccountName')]"
                             ],
                             "properties": {
+                                "queryStringCachingBehavior": "BypassCaching",
                                 "originHostHeader": "[replace(replace(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageSiteAccountName')), '2019-06-01', 'Full').properties.primaryEndpoints.web,'https://',''),'/','')]",
                                 "origins": [
                                     {
