@@ -3,30 +3,62 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "nameEnvironment": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Used as part of the resource naming",
+                "example": "dev, test, prod"
+            }
         },
         "nameRegion": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Used as part of the resource naming",
+                "example": "eus, eu2, uks"
+            }
         },
         "nameApp": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Used as part of the resource naming",
+                "example": "myapp, fitapp"
+            }
         },
         "cdnEndpointName": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "The subdomain of the CDN endpoint",
+                "example": "myapp, fitapp"
+            }
         },
         "rgLocation": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "The region in which all resources are created",
+                "example": "westus3, eastus, uksouth"
+            }
         },
         "apimPublisherName": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Publisher info for the API management service",
+                "example": "MyCorp"
+            }
         },
         "apimPublisherEmail": {
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Publisher info for the API management service",
+                "example": "jane@mycorp.com"
+            }
         },
         "adTenantId": {
             "type": "string",
             "minLength": 36,
-            "maxLength": 36
+            "maxLength": 36,
+            "metadata": {
+                "description": "Azure Active Directory tenant ID to associate the key vault with",
+                "example": "8082ee13-8438-437e-8568-f39cda6bf586"
+            }
         }
     },
     "variables": {
