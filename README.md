@@ -54,10 +54,8 @@ Here's how to get the app up and running in your Azure subscription:
     vault_name=$(az keyvault list --query "[?ends_with(name,'vault01')].name" -o tsv)
     ```
 
-5. We need to turn on the static website capability of our blob storage account (since setting blob service properties is not supported in ARM templates). 
+5. We need to turn on the static website capability of our blob storage account (since setting blob service properties is not supported in ARM templates):
    
-    Save the name of the storage account to a variable and then apply the change:
-
     ``` bash
     az storage blob service-properties update --account-name $site_storage_name --static-website true --index-document index.html --404-document index.html 
     ```
@@ -72,11 +70,18 @@ Here's how to get the app up and running in your Azure subscription:
 
     Then go to the Fitbit developer website and enter it as the `Redirect URL`. You can also add `http://localhost:4200` for local development.
 
+8. Now let's set a life cycle policy on the blob storage account to move old biometric data to the cool tier after 30 days:
+
+    ``` bash
+    az storage account management-policy create \
+        --resource-group $data_rg_name \
+        --account-name $data_storage_name \
+        --policy deploy/data-blob-policy.json
+    ```    
 
 ### Part 2: Deploy the API
 
 First we need to put the access keys that the API needs (to connect to other resources like Azure Storage) into the Key Vault. Before the following commands will work, you'll need to grant yourself permission by adding an access policy to the Key Vault for your user/principal. Look for "Access policies" in the menu on the left when you're viewing the key vault in the Azure Portal.
-
 
 Set the access key for our Cosmos DB resource:
 
@@ -129,10 +134,8 @@ echo '{
     "appConfig": {
         "connectionString": "'$appconfig_connection_string'"
     }
-}'
+}' > api/config.json
 ```
-
-Copy the output JSON into the `api/config.json` file.
 
 We'll need a way for our app service to talk to the key vault - the app configuration just stores references to key vault values but it's the app service itself that will retrieve values from the key vault. To do this we'll create a (system-assigned) managed identity for our app service and then grant it access to our key vault using the default access policy permission model (instead of the role-based access control model).
 
@@ -165,7 +168,7 @@ When pushing updates later on you only need to run:
 az acr build --registry $acr_name --image bitably-api .
 ```
 
-You can verify that the API is up-and-running by hitting the `ping` endpoint in a browser. The following command will give you the full URL. If you run into any issues, check out the Log Stream in the app service via the portal.
+You can verify that the API is up-and-running (and warm it up) by hitting the `ping` endpoint in a browser. The following command will give you the full URL. If you run into any issues, check out the Log Stream in the app service via the portal.
 
 ``` bash
 echo https://$app_name.azurewebsites.net/ping
@@ -185,10 +188,8 @@ export const environment = {
   websiteUrl: "'$site_url'",
   fitbitClientId: "<fitbit_client_id>"
 };
-'
+' > spa/src/environments/environment.prod.ts
 ```
-
-Copy the output and paste it into the file `spa/src/environments/environment.prod.ts`. 
 
 Also set the Fitbit client ID in the file `spa/src/environments/environment.ts`:
 
@@ -227,10 +228,8 @@ echo '{
         "clientId": "<fitbit_client_id>",
         "secret": "<fitbit_client_secret>"
     }
-}'
+}' > functions/Fetch/config.json
 ```
-
-Copy the output of the above command and paste it into the file `functions/Fetch/config.json`.
 
 Next we'll deploy the Function App. The following commands will find the names of the resource group and function app and then perform a zip deployment:
 

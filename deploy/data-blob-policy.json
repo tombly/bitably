@@ -1,0 +1,32 @@
+{
+    "rules": [
+        {
+            "name": "MoveSleepDataToCool",
+            "enabled": true,
+            "type": "Lifecycle",
+            "definition": {
+                "filters": {
+                    "blobTypes": [
+                        "blockBlob"
+                    ],
+                    "prefixMatch": [
+                        "sleep/"
+                    ]
+                },
+                "actions": {
+                    "baseBlob": {
+                        "tierToCool": {
+                            "daysAfterModificationGreaterThan": 30
+                        },
+                        "tierToArchive": {
+                            "daysAfterModificationGreaterThan": 365
+                        },
+                        "delete": {
+                            "daysAfterModificationGreaterThan": 2555
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

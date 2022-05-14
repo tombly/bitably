@@ -6,6 +6,7 @@ const config = require('./config.js');
 const fitbit = require('./fitbit');
 const { TableClient, AzureNamedKeyCredential } = require("@azure/data-tables");
 const { CosmosClient } = require("@azure/cosmos");
+const { BlobServiceClient, StorageSharedKeyCredential } = require("@azure/storage-blob");
 
 const databaseName = "Biometric";
 const containerName = "Sleep";
@@ -43,6 +44,7 @@ module.exports = async function (context) {
                     // isn't any data).
                     const respObject = await fitbit.getSleepDataForDate(date, user.token);
                     if (respObject.dateOfSleep !== undefined) {
+                        await SaveToBlobStorage(respObject, user.userId);
                         await SaveToCosmos(respObject, user.userId);
                     }
                 }
@@ -149,6 +151,8 @@ async function initCosmosContainer() {
 
 async function SaveToCosmos(data, userId) {
 
+    console.log("Saving data to cosmos...");
+
     // We will only ever have one item for each user for each day, so we combine
     // the user ID with the date and use it as the id property (which must be
     // within each logical partition) and then we'll use the id property as the
@@ -172,6 +176,30 @@ async function SaveToCosmos(data, userId) {
 
     const container = await getCosmosContainer();
     container.items.create(data);
+}
+
+async function SaveToBlobStorage(data, userId) {
+
+    console.log("Saving data to blob storage...");
+
+    // Create our BlobServiceClient.
+    const account = config.storage.account;
+    const accountKey = config.storage.key;
+
+    const credential = new StorageSharedKeyCredential(account, accountKey);
+    const client = new BlobServiceClient(`https://${account}.blob.core.windows.net`, credential);
+
+    const containerName = `sleep`;
+    const containerClient = client.getContainerClient(containerName);
+
+    // Create the container if it does not exist.
+    await containerClient.createIfNotExists();
+
+    // Upload the data to the container.
+    const blob = JSON.stringify(data);
+    const blobName = `${userId}.${data.dateOfSleep}`;
+    const blobClient = containerClient.getBlockBlobClient(blobName);
+    await blobClient.upload(blob, blob.length);
 }
 
 async function GetUsersFromStorage() {
