@@ -1,4 +1,6 @@
 
+One of the motivations of this project is to learn the Azure services that comprise the Developer Associate certification (i.e the AZ-204 exam). As such, it includes many of the services covered in the exam: container registry, app service, functions, cosmos, blob storage, app configuration, key vault, CDN, app insights, and API management. It doesn't include virtual machines, container instances, identity/AAD/graph, redis cache, event grid, event hub, service bus, or storage queues.
+
 # Bitably app
 
 An app for finding streaks in your Fitbit data, built on Azure.
@@ -79,9 +81,11 @@ Here's how to get the app up and running in your Azure subscription:
         --policy deploy/data-blob-policy.json
     ```    
 
-### Part 2: Deploy the API
+### Part 2: Setup our secrets
 
-First we need to put the access keys that the API needs (to connect to other resources like Azure Storage) into the Key Vault. Before the following commands will work, you'll need to grant yourself permission by adding an access policy to the Key Vault for your user/principal. Look for "Access policies" in the menu on the left when you're viewing the key vault in the Azure Portal.
+The API and functions need access to the other resources (like Azure Storage). The connection and auth info will be stored in Azure App Configuration and Azure Key Vault, respectively.
+
+Before the following commands will work, you'll need to grant yourself permission by adding an access policy to the key vault for your user/principal. Look for "Access policies" in the menu on the left when you're viewing the key vault in the Azure Portal.
 
 Set the access key for our Cosmos DB resource:
 
@@ -99,31 +103,40 @@ data_storage_key=$(az storage account keys list --account-name $data_storage_nam
 az keyvault secret set --vault-name $vault_name --name "data-storage-key" --value $data_storage_key
 ```
 
-Set the instrumentation key for our App Insights resource:
+Set the Fitbit client ID and secret:
+
+``` bash
+az keyvault secret set --vault-name $vault_name --name "fitbit-clientId" --value "<YOUR FITBIT CLIENT ID>"
+az keyvault secret set --vault-name $vault_name --name "fitbit-secret" --value "<YOUR FITBIT CLIENT SECRET>"
+```
+
+Now that we've put our sensitive info into the Key Vault, we can create entries in our App Configuration:
 
 ``` bash
 insights_key=$(az resource show -g $app_rg_name -n $insights_name --resource-type "microsoft.insights/components" --query properties.InstrumentationKey -o tsv)
 
-az keyvault secret set --vault-name $vault_name --name "insights-key" --value $insights_key
-```
-
-Now that we've put our sensitive info into the Key Vault, we can create entries in our App Configuration to make them available to the API.
-
-``` bash
 # Get the ID (which is a URI) of the secrets in the vault.
 cosmos_key_id=$(az keyvault secret show --name "cosmos-key" --vault-name $vault_name --query "id" -o tsv)
 data_storage_key_id=$(az keyvault secret show --name "data-storage-key" --vault-name $vault_name --query "id" -o tsv)
-insights_key_id=$(az keyvault secret show --name "insights-key" --vault-name $vault_name --query "id" -o tsv)
+fitbit_client_id=$(az keyvault secret show --name "fitbit-clientId" --vault-name $vault_name --query "id" -o tsv)
+fitbit_secret=$(az keyvault secret show --name "fitbit-secret" --vault-name $vault_name --query "id" -o tsv)
 
-# Add entries in the app config that point to the key vault secrets.
-az appconfig kv set-keyvault --name $appconfig_name --key "api:cosmos:key" --secret-identifier $cosmos_key_id
-az appconfig kv set-keyvault --name $appconfig_name --key "api:storage:key" --secret-identifier $data_storage_key_id
-az appconfig kv set-keyvault --name $appconfig_name --key "api:appInsights:key" --secret-identifier $insights_key_id
-
-# Put the endpoint and account name into the app config.
 az appconfig kv set --name $appconfig_name --key "api:cosmos:endpoint" --value "https://$cosmos_name.documents.azure.com:443"
+az appconfig kv set-keyvault --name $appconfig_name --key "api:cosmos:key" --secret-identifier $cosmos_key_id
 az appconfig kv set --name $appconfig_name --key "api:storage:account" --value $data_storage_name
+az appconfig kv set-keyvault --name $appconfig_name --key "api:storage:key" --secret-identifier $data_storage_key_id
+az appconfig kv set --name $appconfig_name --key "api:appInsights:key" --value $insights_key
+
+az appconfig kv set --name $appconfig_name --key "function:cosmos:endpoint" --value "https://$cosmos_name.documents.azure.com:443"
+az appconfig kv set-keyvault --name $appconfig_name --key "function:cosmos:key" --secret-identifier $cosmos_key_id
+az appconfig kv set --name $appconfig_name --key "function:storage:account" --value $data_storage_name
+az appconfig kv set-keyvault --name $appconfig_name --key "function:storage:key" --secret-identifier $data_storage_key_id
+az appconfig kv set-keyvault --name $appconfig_name --key "function:fitbit:clientId" --secret-identifier $fitbit_client_id
+az appconfig kv set-keyvault --name $appconfig_name --key "function:fitbit:secret" --secret-identifier $fitbit_secret
+az appconfig kv set --name $appconfig_name --key "function:fitbit:redirectUri" --value "https://$app_name.azurewebsites.net/auth-callback"
 ```
+
+### Part 3: Deploy the API
 
 We need to update the config file with the connection string to the App Configuration resource. Let's grab the connection string using the CLI and generate the config file JSON:
 
@@ -174,7 +187,7 @@ You can verify that the API is up-and-running (and warm it up) by hitting the `p
 echo https://$app_name.azurewebsites.net/ping
 ```
 
-### Part 3: Deploy the SPA
+### Part 4: Deploy the SPA
 
 First we need to edit the config file. Run the following commands to generate the contents of the file. The `fitbit_client_id` is the 6-character alpha-numeric ID provided to you when you register as a Fitbit developer.
 
@@ -186,7 +199,7 @@ export const environment = {
   production: true,
   apiUrl: "https://'$apim_name'.azure-api.net",
   websiteUrl: "'$site_url'",
-  fitbitClientId: "<fitbit_client_id>"
+  fitbitClientId: "<YOUR FITBIT CLIENT ID>"
 };
 ' > spa/src/environments/environment.prod.ts
 ```
@@ -196,7 +209,7 @@ Also set the Fitbit client ID in the file `spa/src/environments/environment.ts`:
 ``` js
 export const environment = {
   ...
-  fitbitClientId: '<fitbit_client_id>'
+  fitbitClientId: '<YOUR FITBIT CLIENT ID>'
 };
 ```
 
@@ -208,27 +221,26 @@ az storage blob upload-batch --account-name $site_storage_name -s ./dist/bitably
 cd ..
 ```
 
-### Part 4: Deploy the Function App
+### Part 5: Deploy the Function App
 
-First we need to edit the config file. The following commands will find the name of the app service and then generate the contents of the config file:
-
+First we need to put the connection string for the app configuration in our config file:
 
 ``` bash
 echo '{
-    "cosmos": {
-        "endpoint": "https://'$cosmos_name'.documents.azure.com:443",
-        "key": "'$cosmos_key'"
-    },
-    "storage": {
-        "account": "'$data_storage_name'",
-        "key": "'$data_storage_key'"
-    },
-    "fitbit": {
-        "redirectUri": "https://'$app_name'.azurewebsites.net/auth-callback",
-        "clientId": "<fitbit_client_id>",
-        "secret": "<fitbit_client_secret>"
+    "appConfig": {
+        "connectionString": "'$appconfig_connection_string'"
     }
 }' > functions/Fetch/config.json
+```
+
+Just like for the API, we need to create a (system-assigned) managed identity to authorize the function app to talk to the key vault:
+
+``` bash
+az functionapp identity assign --name $func_name --resource-group $func_rg 
+
+identity_id=$(az functionapp identity show --name $func_name --resource-group $func_rg --query "principalId" -o tsv)
+
+az keyvault set-policy --name $vault_name --object-id $identity_id --secret-permissions get 
 ```
 
 Next we'll deploy the Function App. The following commands will find the names of the resource group and function app and then perform a zip deployment:

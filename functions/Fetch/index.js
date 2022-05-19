@@ -2,7 +2,7 @@
 // See here for documentation:
 // https://github.com/Azure/azure-sdk-for-js/tree/master/sdk/tables/data-tables/samples/v12/javascript
 
-const config = require('./config.js');
+const configuration = require('./config.js');
 const fitbit = require('./fitbit');
 const { TableClient, AzureNamedKeyCredential } = require("@azure/data-tables");
 const { CosmosClient } = require("@azure/cosmos");
@@ -14,6 +14,9 @@ const containerName = "Sleep";
 module.exports = async function (context) {
 
     context.log(`Fetch function started ${new Date().toISOString()}`);
+
+    // Read our configuration from our App Configuration resource.
+    config = await configuration.readConfig();
 
     // Create and configure our Cosmos container if necessary.
     await initCosmosContainer();

@@ -1,5 +1,4 @@
 
-const config = require('./config.js');
 const querystring = require('querystring');
 const utils = require('./utils');
 
@@ -31,7 +30,7 @@ module.exports = {
         }
     },
 
-    getToken(code) {
+    getToken(config, code) {
         console.log(`getToken(${code})`);
 
         const postData = querystring.stringify({
@@ -56,7 +55,7 @@ module.exports = {
         return utils.callHttp(options, postData);
     },
 
-    getRefreshToken(refreshToken) {
+    getRefreshToken(config, refreshToken) {
         console.log(`refreshToken(${refreshToken})`);
 
         const postData = querystring.stringify({
