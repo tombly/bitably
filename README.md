@@ -306,3 +306,8 @@ The documentation for the Fitbit API is located here:
 
 https://dev.fitbit.com/build/reference/web-api/explore/
 https://dev.fitbit.com/build/reference/web-api/oauth2/
+
+### To do
+Protect the API so only the APIM can call it:
+https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-protect-backend-with-aad
+

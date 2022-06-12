@@ -24,7 +24,10 @@ export class RegisterComponent implements OnInit {
     const scopes = 'profile sleep';
     const lifetime = '86400';
 
-    // Use the Implicit OAuth flow to authenticate with the Fitbit API.
+    // Use the Implicit OAuth flow to authorize with the Fitbit API. This isn't
+    // great since it returns the access token directly to the redirect URL, but
+    // it's sufficient for our purposes and is convenient for the SPA to be able
+    // to authorize itself without relying on an intermediary server.
     window.location.href = `https://www.fitbit.com/oauth2/authorize?response_type=token&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scopes}&expires_in=${lifetime}`;
   }
 }

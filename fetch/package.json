@@ -13,6 +13,7 @@
     "@azure/identity": "^2.0.4",
     "@azure/keyvault-secrets": "^4.4.0",
     "@azure/storage-blob": "^12.9.0",
-    "durable-functions": "^1.5.1"
+    "durable-functions": "^1.5.1",
+    "luxon": "^2.4.0"
   }
 }

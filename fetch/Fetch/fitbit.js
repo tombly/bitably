@@ -4,6 +4,33 @@ const utils = require('./utils');
 
 module.exports = {
 
+    // Retrieves sleep data from the Fitbit API for the given user and date
+    // range using the given access token. This returns a list of objects,
+    // one for each day requested. The API allows at most 100 days per
+    // request.
+    async getSleepDataForDateRange(token, startDate, stopDate) {
+
+        const options = {
+            hostname: 'api.fitbit.com',
+            port: 443,
+            path: `/1.2/user/-/sleep/date/${startDate}/${stopDate}.json`,
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        }
+
+        const response = JSON.parse(await utils.callHttp(options));
+
+        // Grab the data from the "sleep" property, which is an array.
+        if (response.sleep.length == 0) {
+            return [];
+        }
+        else {
+            return response.sleep;
+        }
+    },
+
     // Retrieves sleep data from the Fitbit API for the given user and date using
     // the given access token.
     async getSleepDataForDate(date, token) {
