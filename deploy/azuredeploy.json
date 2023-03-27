@@ -70,16 +70,15 @@
         "storageDataAccountName": "[concat(variables('safePrefix'), 'datastorage')]",
         "storageSiteAccountName": "[concat(variables('safePrefix'), 'sitestorage')]",
         "storageFuncAccountName": "[concat(variables('safePrefix'), 'funcstorage')]",
-        "cosmosDataAccountName": "[concat(variables('dashPrefix'), 'cosmosdb')]",
+        "cosmosAccountName": "[concat(variables('dashPrefix'), 'cosmosdb')]",
         "appName": "[concat(variables('safePrefix'), 'api')]",
-        "appInsightsAppName": "[concat(variables('dashPrefix'), 'appinsights')]",
+        "appInsightsName": "[concat(variables('dashPrefix'), 'appinsights')]",
         "aspName": "[concat(variables('dashPrefix'), 'asp')]",
         "cdnName": "[concat(variables('dashPrefix'), 'cdn')]",
-        "functionAppName": "[concat(variables('dashPrefix'), 'fetchfunc')]",
-        "appInsightsFuncName": "[concat(variables('dashPrefix'), 'insightsfunc01')]",
-        "apimServiceName": "[concat(variables('dashPrefix'), 'apim')]",
-        "configServiceName": "[concat(variables('dashPrefix'), 'appconfig')]",
-        "vaultServiceName": "[concat(variables('dashPrefix'), 'keyvault')]",
+        "fetchFunctionName": "[concat(variables('dashPrefix'), 'fetchfunc')]",
+        "apimName": "[concat(variables('dashPrefix'), 'apim')]",
+        "appConfigName": "[concat(variables('dashPrefix'), 'appconfig')]",
+        "keyVaultName": "[concat(variables('dashPrefix'), 'keyvault')]",
 
         "apimApiName": "BitablyAPI",
         "apimFunctionName": "FetchFunctionAPI"
@@ -91,6 +90,57 @@
             "location": "[parameters('rgLocation')]",
             "name": "[variables('rgName')]",
             "properties": {}
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "appInsightsDeployment",
+            "resourceGroup": "[variables('rgName')]",
+            "dependsOn": [
+                "[variables('rgName')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "inner"
+                },
+                "parameters": {
+                    "rgLocation": {
+                        "value": "[parameters('rgLocation')]"
+                    },
+                    "appInsightsName": {
+                        "value": "[variables('appInsightsName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "rgLocation": {
+                            "type": "string"
+                        },
+                        "appInsightsName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {},
+                    "resources": [
+                        {
+                            "type": "microsoft.insights/components",
+                            "apiVersion": "2015-05-01",
+                            "name": "[parameters('appInsightsName')]",
+                            "location": "[parameters('rgLocation')]",
+                            "tags": {},
+                            "kind": "other",
+                            "properties": {
+                                "Application_Type": "web",
+                                "ApplicationId": "[parameters('appInsightsName')]"
+                            }
+                        }
+                    ]
+                },
+                "outputs": {}
+            }
         },
         {
             "type": "Microsoft.Resources/deployments",
@@ -109,8 +159,8 @@
                     "rgLocation": {
                         "value": "[parameters('rgLocation')]"
                     },
-                    "configServiceName": {
-                        "value": "[variables('configServiceName')]"
+                    "appConfigName": {
+                        "value": "[variables('appConfigName')]"
                     }
                 },
                 "template": {
@@ -120,7 +170,7 @@
                         "rgLocation": {
                             "type": "string"
                         },
-                        "configServiceName": {
+                        "appConfigName": {
                             "type": "string"
                         }
                     },
@@ -129,7 +179,7 @@
                         {
                             "type": "Microsoft.AppConfiguration/configurationStores",
                             "apiVersion": "2021-10-01-preview",
-                            "name": "[parameters('configServiceName')]",
+                            "name": "[parameters('appConfigName')]",
                             "location": "[parameters('rgLocation')]",
                             "sku": {
                                 "name": "free"
@@ -163,8 +213,8 @@
                     "rgLocation": {
                         "value": "[parameters('rgLocation')]"
                     },
-                    "vaultServiceName": {
-                        "value": "[variables('vaultServiceName')]"
+                    "keyVaultName": {
+                        "value": "[variables('keyVaultName')]"
                     },
                     "tenantId": {
                         "value": "[parameters('adTenantId')]"
@@ -177,7 +227,7 @@
                         "rgLocation": {
                             "type": "string"
                         },
-                        "vaultServiceName": {
+                        "keyVaultName": {
                             "type": "string"
                         },
                         "tenantId": {
@@ -189,7 +239,7 @@
                         {
                             "type": "Microsoft.KeyVault/vaults",
                             "apiVersion": "2021-11-01-preview",
-                            "name": "[parameters('vaultServiceName')]",
+                            "name": "[parameters('keyVaultName')]",
                             "location": "[parameters('rgLocation')]",
                             "properties": {
                                 "sku": {
@@ -200,7 +250,7 @@
                                 "accessPolicies": [],
                                 "enableSoftDelete": false,
                                 "enableRbacAuthorization": false,
-                                "vaultUri": "[concat('https://', parameters('vaultServiceName'), '.vault.azure.net/')]",
+                                "vaultUri": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
                                 "publicNetworkAccess": "Enabled"
                             }
                         }
@@ -366,7 +416,7 @@
                         {
                             "type": "Microsoft.DocumentDB/databaseAccounts",
                             "apiVersion": "2021-04-15",
-                            "name": "[variables('cosmosDataAccountName')]",
+                            "name": "[variables('cosmosAccountName')]",
                             "location": "[parameters('rgLocation')]",
                             "properties": {
                                 "enableFreeTier": true,
@@ -391,7 +441,8 @@
             "name": "appServiceDeployment",
             "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]",
+                "appInsightsDeployment"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -411,8 +462,8 @@
                     "containersName": {
                         "value": "[variables('containersName')]"
                     },
-                    "appInsightsAppName": {
-                        "value": "[variables('appInsightsAppName')]"
+                    "appInsightsName": {
+                        "value": "[variables('appInsightsName')]"
                     }
                 },
                 "template": {
@@ -431,7 +482,7 @@
                         "containersName": {
                             "type": "string"
                         },
-                        "appInsightsAppName": {
+                        "appInsightsName": {
                             "type": "string"
                         }
                     },
@@ -456,8 +507,7 @@
                             "name": "[parameters('appName')]",
                             "location": "[parameters('rgLocation')]",
                             "dependsOn": [
-                                "[parameters('aspName')]",
-                                "[resourceId('microsoft.insights/components/',parameters('appInsightsAppName'))]"
+                                "[parameters('aspName')]"
                             ],
                             "properties": {
                                 "serverFarmId": "[parameters('aspName')]",
@@ -467,11 +517,11 @@
                                     "appSettings": [
                                         {
                                             "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-                                            "value": "[reference(concat('microsoft.insights/components/',parameters('appInsightsAppName')), '2015-05-01').InstrumentationKey]"
+                                            "value": "[reference(concat('microsoft.insights/components/',parameters('appInsightsName')), '2015-05-01').InstrumentationKey]"
                                         },
                                         {
                                             "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-                                            "value": "[reference(concat('microsoft.insights/components/',parameters('appInsightsAppName')), '2015-05-01').ConnectionString]"
+                                            "value": "[reference(concat('microsoft.insights/components/',parameters('appInsightsName')), '2015-05-01').ConnectionString]"
                                         },
                                         {
                                             "name": "ApplicationInsightsAgent_EXTENSION_VERSION",
@@ -489,18 +539,7 @@
                                 },
                                 "resources": []
                             }
-                        },
-                        {
-                            "apiVersion": "2015-05-01",
-                            "name": "[parameters('appInsightsAppName')]",
-                            "type": "microsoft.insights/components",
-                            "location": "[parameters('rgLocation')]",
-                            "tags": null,
-                            "properties": {
-                                "ApplicationId": "[parameters('appInsightsAppName')]",
-                                "Request_Source": "IbizaWebAppExtensionCreate"
-                            }
-                        },
+                        },                       
                         {
                             "type": "Microsoft.Web/sites/config",
                             "apiVersion": "2021-03-01",
@@ -535,8 +574,8 @@
                     "rgLocation": {
                         "value": "[parameters('rgLocation')]"
                     },
-                    "apimServiceName": {
-                        "value": "[variables('apimServiceName')]"
+                    "apimName": {
+                        "value": "[variables('apimName')]"
                     },
                     "apimPublisherEmail": {
                         "value": "[parameters('apimPublisherEmail')]"
@@ -553,8 +592,8 @@
                     "apimFunctionName": {
                         "value": "[variables('apimFunctionName')]"
                     },
-                    "functionAppName": {
-                        "value": "[variables('functionAppName')]"
+                    "fetchFunctionName": {
+                        "value": "[variables('fetchFunctionName')]"
                     }
                 },
                 "template": {
@@ -564,7 +603,7 @@
                         "rgLocation": {
                             "type": "string"
                         },
-                        "apimServiceName": {
+                        "apimName": {
                             "type": "string"
                         },
                         "apimPublisherEmail": {
@@ -582,7 +621,7 @@
                         "apimFunctionName": {
                             "type": "string"
                         },
-                        "functionAppName": {
+                        "fetchFunctionName": {
                             "type": "string"
                         }
                     },
@@ -591,7 +630,7 @@
                         {
                             "type": "Microsoft.ApiManagement/service",
                             "apiVersion": "2019-12-01",
-                            "name": "[parameters('apimServiceName')]",
+                            "name": "[parameters('apimName')]",
                             "location": "[parameters('rgLocation')]",
                             "sku": {
                                 "name": "Consumption",
@@ -605,9 +644,9 @@
                         {
                             "type": "Microsoft.ApiManagement/service/apis",
                             "apiVersion": "2021-01-01-preview",
-                            "name": "[concat(parameters('apimServiceName'),'/bitably')]",
+                            "name": "[concat(parameters('apimName'),'/bitably')]",
                             "dependsOn": [
-                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
                             ],
                             "properties": {
                                 "displayName": "[parameters('apimApiName')]",
@@ -624,15 +663,15 @@
                         {
                             "type": "Microsoft.ApiManagement/service/apis",
                             "apiVersion": "2021-01-01-preview",
-                            "name": "[concat(parameters('apimServiceName'),'/fetchfunction')]",
+                            "name": "[concat(parameters('apimName'),'/fetchfunction')]",
                             "dependsOn": [
-                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
                             ],
                             "properties": {
                                 "displayName": "[parameters('apimFunctionName')]",
                                 "apiRevision": "1",
                                 "subscriptionRequired": false,
-                                "serviceUrl": "[concat('https://',parameters('functionAppName'),'.azurewebsites.net/api/orchestrators/FetchOrchestrator')]",
+                                "serviceUrl": "[concat('https://',parameters('fetchFunctionName'),'.azurewebsites.net/api/orchestrators/FetchOrchestrator')]",
                                 "path": "fetch",
                                 "protocols": [
                                     "https"
@@ -643,10 +682,10 @@
                         {
                             "type": "Microsoft.ApiManagement/service/apis/operations",
                             "apiVersion": "2021-01-01-preview",
-                            "name": "[concat(parameters('apimServiceName'),'/bitably/register')]",
+                            "name": "[concat(parameters('apimName'),'/bitably/register')]",
                             "dependsOn": [
-                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'bitably')]",
-                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'bitably')]",
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
                             ],
                             "properties": {
                                 "displayName": "Register",
@@ -675,10 +714,10 @@
                         {
                             "type": "Microsoft.ApiManagement/service/apis/operations",
                             "apiVersion": "2021-01-01-preview",
-                            "name": "[concat(parameters('apimServiceName'),'/bitably/sleep-day-count')]",
+                            "name": "[concat(parameters('apimName'),'/bitably/sleep-day-count')]",
                             "dependsOn": [
-                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'bitably')]",
-                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'bitably')]",
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
                             ],
                             "properties": {
                                 "displayName": "Sleep Day Count",
@@ -702,10 +741,10 @@
                         {
                             "type": "Microsoft.ApiManagement/service/apis/operations",
                             "apiVersion": "2021-01-01-preview",
-                            "name": "[concat(parameters('apimServiceName'),'/bitably/sleep-day-hours-streak')]",
+                            "name": "[concat(parameters('apimName'),'/bitably/sleep-day-hours-streak')]",
                             "dependsOn": [
-                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'bitably')]",
-                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'bitably')]",
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
                             ],
                             "properties": {
                                 "displayName": "Sleep Day Hours Streak",
@@ -729,10 +768,10 @@
                         {
                             "type": "Microsoft.ApiManagement/service/apis/operations",
                             "apiVersion": "2021-01-01-preview",
-                            "name": "[concat(parameters('apimServiceName'),'/fetchfunction/fetch')]",
+                            "name": "[concat(parameters('apimName'),'/fetchfunction/fetch')]",
                             "dependsOn": [
-                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimServiceName'), 'fetchfunction')]",
-                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimServiceName'))]"
+                                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'fetchfunction')]",
+                                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
                             ],
                             "properties": {
                                 "displayName": "Fetch",
@@ -753,7 +792,8 @@
             "name": "functionDeployment",
             "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]",
+                "appInsightsDeployment"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -767,11 +807,11 @@
                     "storageFuncAccountName": {
                         "value": "[variables('storageFuncAccountName')]"
                     },
-                    "appInsightsFuncName": {
-                        "value": "[variables('appInsightsFuncName')]"
+                    "appInsightsName": {
+                        "value": "[variables('appInsightsName')]"
                     },
-                    "functionAppName": {
-                        "value": "[variables('functionAppName')]"
+                    "fetchFunctionName": {
+                        "value": "[variables('fetchFunctionName')]"
                     }
                 },
                 "template": {
@@ -784,10 +824,10 @@
                         "storageFuncAccountName": {
                             "type": "string"
                         },
-                        "appInsightsFuncName": {
+                        "appInsightsName": {
                             "type": "string"
                         },
-                        "functionAppName": {
+                        "fetchFunctionName": {
                             "type": "string"
                         }
                     },
@@ -802,34 +842,27 @@
                             "sku": {
                                 "name": "Standard_LRS"
                             }
-                        },
-                        {
-                            "apiVersion": "2015-05-01",
-                            "name": "[parameters('appInsightsFuncName')]",
-                            "type": "Microsoft.Insights/components",
-                            "kind": "web",
-                            "location": "[resourceGroup().location]",
-                            "tags": {
-                                "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('functionAppName'))]": "Resource"
-                            },
-                            "properties": {
-                                "Application_Type": "web",
-                                "ApplicationId": "[parameters('appInsightsFuncName')]"
-                            }
-                        },
+                        },                       
                         {
                             "apiVersion": "2015-08-01",
                             "type": "Microsoft.Web/sites",
-                            "name": "[parameters('functionAppName')]",
+                            "name": "[parameters('fetchFunctionName')]",
                             "location": "[resourceGroup().location]",
                             "kind": "functionapp",
                             "dependsOn": [
-                                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageFuncAccountName'))]",
-                                "[resourceId('Microsoft.Insights/components', parameters('appInsightsFuncName'))]"
+                                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageFuncAccountName'))]"
                             ],
                             "properties": {
                                 "siteConfig": {
                                     "appSettings": [
+                                        {
+                                            "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+                                            "value": "[reference(concat('microsoft.insights/components/',parameters('appInsightsName')), '2015-05-01').InstrumentationKey]"
+                                        },
+                                        {
+                                            "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                                            "value": "[reference(concat('microsoft.insights/components/',parameters('appInsightsName')), '2015-05-01').ConnectionString]"
+                                        },
                                         {
                                             "name": "AzureWebJobsStorage",
                                             "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', parameters('storageFuncAccountName'), ';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageFuncAccountName')),'2019-06-01').keys[0].value)]"
@@ -960,6 +993,6 @@
                     ]
                 }
             }
-        }
+        }        
     ]
 }
