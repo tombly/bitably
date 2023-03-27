@@ -62,30 +62,24 @@
         }
     },
     "variables": {
-        "rgPrefix": "[concat(parameters('nameEnvironment'), '-', parameters('nameRegion'), '-', parameters('nameApp'), '-rg')]",
-        "resPrefix": "[concat(parameters('nameEnvironment'), parameters('nameRegion'), parameters('nameApp'))]",
-        "rgAcrName": "[concat(variables('rgPrefix'), '-acr01')]",
-        "rgDataName": "[concat(variables('rgPrefix'), '-data01')]",
-        "rgAppName": "[concat(variables('rgPrefix'), '-app01')]",
-        "rgAPIMName": "[concat(variables('rgPrefix'), '-apim01')]",
-        "rgFuncName": "[concat(variables('rgPrefix'), '-func01')]",
-        "rgSiteName": "[concat(variables('rgPrefix'), '-site01')]",
-        "rgConfigName": "[concat(variables('rgPrefix'), '-conf01')]",
+        "safePrefix": "[concat(parameters('nameEnvironment'), parameters('nameRegion'), parameters('nameApp'))]",
+        "dashPrefix": "[concat(parameters('nameEnvironment'), '-', parameters('nameRegion'), '-', parameters('nameApp'), '-')]",
+        "rgName": "[concat(variables('dashPrefix'), 'rg')]",
 
-        "registriesName": "[concat(variables('resPrefix'), 'registry01')]",
-        "storageDataAccountName": "[concat(variables('resPrefix'), 'storagedata01')]",
-        "storageSiteAccountName": "[concat(variables('resPrefix'), 'storagesite01')]",
-        "cosmosDataAccountName": "[concat(variables('resPrefix'), 'cosmos01')]",
-        "appName": "[concat(variables('resPrefix'), 'webapp01')]",
-        "appInsightsAppName": "[concat(variables('resPrefix'), 'insightsapp01')]",
-        "aspName": "[concat(variables('resPrefix'), 'asp01')]",
-        "cdnName": "[concat(variables('resPrefix'), 'cdn01')]",
-        "functionAppName": "[concat(variables('resPrefix'), 'funcapp01')]",
-        "appInsightsFuncName": "[concat(variables('resPrefix'), 'insightsfunc01')]",
-        "storageFuncAccountName": "[concat(variables('resPrefix'), 'storagefunc01')]",
-        "apimServiceName": "[concat(variables('resPrefix'), 'apim01')]",
-        "configServiceName": "[concat(variables('resPrefix'), 'config01')]",
-        "vaultServiceName": "[concat(variables('resPrefix'), 'vault01')]",
+        "containersName": "[concat(variables('safePrefix'), 'containers')]",
+        "storageDataAccountName": "[concat(variables('safePrefix'), 'datastorage')]",
+        "storageSiteAccountName": "[concat(variables('safePrefix'), 'sitestorage')]",
+        "storageFuncAccountName": "[concat(variables('safePrefix'), 'funcstorage')]",
+        "cosmosDataAccountName": "[concat(variables('dashPrefix'), 'cosmosdb')]",
+        "appName": "[concat(variables('safePrefix'), 'api')]",
+        "appInsightsAppName": "[concat(variables('dashPrefix'), 'appinsights')]",
+        "aspName": "[concat(variables('dashPrefix'), 'asp')]",
+        "cdnName": "[concat(variables('dashPrefix'), 'cdn')]",
+        "functionAppName": "[concat(variables('dashPrefix'), 'fetchfunc')]",
+        "appInsightsFuncName": "[concat(variables('dashPrefix'), 'insightsfunc01')]",
+        "apimServiceName": "[concat(variables('dashPrefix'), 'apim')]",
+        "configServiceName": "[concat(variables('dashPrefix'), 'appconfig')]",
+        "vaultServiceName": "[concat(variables('dashPrefix'), 'keyvault')]",
 
         "apimApiName": "BitablyAPI",
         "apimFunctionName": "FetchFunctionAPI"
@@ -95,16 +89,16 @@
             "type": "Microsoft.Resources/resourceGroups",
             "apiVersion": "2018-05-01",
             "location": "[parameters('rgLocation')]",
-            "name": "[variables('rgConfigName')]",
+            "name": "[variables('rgName')]",
             "properties": {}
         },
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "name": "configDeployment",
-            "resourceGroup": "[variables('rgConfigName')]",
+            "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[variables('rgConfigName')]"
+                "[variables('rgName')]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -156,9 +150,9 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "name": "vaultDeployment",
-            "resourceGroup": "[variables('rgConfigName')]",
+            "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[variables('rgConfigName')]"
+                "[variables('rgName')]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -216,19 +210,12 @@
             }
         },
         {
-            "type": "Microsoft.Resources/resourceGroups",
-            "apiVersion": "2018-05-01",
-            "location": "[parameters('rgLocation')]",
-            "name": "[variables('rgAcrName')]",
-            "properties": {}
-        },
-        {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "name": "registryDeployment",
-            "resourceGroup": "[variables('rgAcrName')]",
+            "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[variables('rgAcrName')]",
+                "[variables('rgName')]",
                 "appServiceDeployment"
             ],
             "properties": {
@@ -240,14 +227,14 @@
                     "rgLocation": {
                         "value": "[parameters('rgLocation')]"
                     },
-                    "registriesName": {
-                        "value": "[variables('registriesName')]"
+                    "containersName": {
+                        "value": "[variables('containersName')]"
                     },
                     "appName": {
                         "value": "[variables('appName')]"
                     },
-                    "rgAppName": {
-                        "value": "[variables('rgAppName')]"
+                    "rgName": {
+                        "value": "[variables('rgName')]"
                     }
                 },
                 "template": {
@@ -257,13 +244,13 @@
                         "rgLocation": {
                             "type": "string"
                         },
-                        "registriesName": {
+                        "containersName": {
                             "type": "string"
                         },
                         "appName": {
                             "type": "string"
                         },
-                        "rgAppName": {
+                        "rgName": {
                             "type": "string"
                         }
                     },
@@ -272,7 +259,7 @@
                         {
                             "type": "Microsoft.ContainerRegistry/registries",
                             "apiVersion": "2021-06-01-preview",
-                            "name": "[parameters('registriesName')]",
+                            "name": "[parameters('containersName')]",
                             "location": "[parameters('rgLocation')]",
                             "tags": {},
                             "sku": {
@@ -310,10 +297,10 @@
                         {
                             "type": "Microsoft.ContainerRegistry/registries/webhooks",
                             "apiVersion": "2021-06-01-preview",
-                            "name": "[concat(parameters('registriesName'), '/', parameters('appName'))]",
+                            "name": "[concat(parameters('containersName'), '/', parameters('appName'))]",
                             "location": "[parameters('rgLocation')]",
                             "dependsOn": [
-                                "[parameters('registriesName')]"
+                                "[parameters('containersName')]"
                             ],
                             "properties": {
                                 "status": "enabled",
@@ -321,7 +308,7 @@
                                 "actions": [
                                     "push"
                                 ],
-                                "serviceUri": "[concat(list(resourceId(parameters('rgAppName'), 'Microsoft.Web/sites/config', parameters('appName'), 'publishingcredentials'), '2015-08-01').properties.scmUri, '/docker/hook')]"
+                                "serviceUri": "[concat(list(resourceId(parameters('rgName'), 'Microsoft.Web/sites/config', parameters('appName'), 'publishingcredentials'), '2015-08-01').properties.scmUri, '/docker/hook')]"
                             }
                         }
                     ]
@@ -330,19 +317,12 @@
             }
         },
         {
-            "type": "Microsoft.Resources/resourceGroups",
-            "apiVersion": "2018-05-01",
-            "location": "[parameters('rgLocation')]",
-            "name": "[variables('rgDataName')]",
-            "properties": {}
-        },
-        {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "name": "storageDeployment",
-            "resourceGroup": "[variables('rgDataName')]",
+            "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgDataName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -371,9 +351,9 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "name": "cosmosDeployment",
-            "resourceGroup": "[variables('rgDataName')]",
+            "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgDataName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -406,19 +386,12 @@
             }
         },
         {
-            "type": "Microsoft.Resources/resourceGroups",
-            "apiVersion": "2018-05-01",
-            "location": "[parameters('rgLocation')]",
-            "name": "[variables('rgAppName')]",
-            "properties": {}
-        },
-        {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "name": "appServiceDeployment",
-            "resourceGroup": "[variables('rgAppName')]",
+            "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgAppName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -435,8 +408,8 @@
                     "aspName": {
                         "value": "[variables('aspName')]"
                     },
-                    "registriesName": {
-                        "value": "[variables('registriesName')]"
+                    "containersName": {
+                        "value": "[variables('containersName')]"
                     },
                     "appInsightsAppName": {
                         "value": "[variables('appInsightsAppName')]"
@@ -455,7 +428,7 @@
                         "aspName": {
                             "type": "string"
                         },
-                        "registriesName": {
+                        "containersName": {
                             "type": "string"
                         },
                         "appInsightsAppName": {
@@ -489,7 +462,7 @@
                             "properties": {
                                 "serverFarmId": "[parameters('aspName')]",
                                 "siteConfig": {
-                                    "linuxFxVersion": "[concat('DOCKER|',parameters('registriesName'),'.azurecr.io/bitably-api:latest')]",
+                                    "linuxFxVersion": "[concat('DOCKER|',parameters('containersName'),'.azurecr.io/bitably-api:latest')]",
                                     "acrUseManagedIdentityCreds": false,
                                     "appSettings": [
                                         {
@@ -546,19 +519,12 @@
             }
         },
         {
-            "type": "Microsoft.Resources/resourceGroups",
-            "apiVersion": "2018-05-01",
-            "location": "[parameters('rgLocation')]",
-            "name": "[variables('rgAPIMName')]",
-            "properties": {}
-        },
-        {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "name": "apimDeployment",
-            "resourceGroup": "[variables('rgAPIMName')]",
+            "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgAPIMName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -782,19 +748,12 @@
             }
         },
         {
-            "type": "Microsoft.Resources/resourceGroups",
-            "apiVersion": "2018-05-01",
-            "location": "[parameters('rgLocation')]",
-            "name": "[variables('rgFuncName')]",
-            "properties": {}
-        },
-        {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "name": "functionDeployment",
-            "resourceGroup": "[variables('rgFuncName')]",
+            "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgFuncName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -897,19 +856,12 @@
             }
         },
         {
-            "type": "Microsoft.Resources/resourceGroups",
-            "apiVersion": "2018-05-01",
-            "location": "[parameters('rgLocation')]",
-            "name": "[variables('rgSiteName')]",
-            "properties": {}
-        },
-        {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2018-05-01",
             "name": "siteDeployment",
-            "resourceGroup": "[variables('rgSiteName')]",
+            "resourceGroup": "[variables('rgName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgSiteName'))]"
+                "[resourceId('Microsoft.Resources/resourceGroups/', variables('rgName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
